@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
     print("Starting training")
 
-    policy_name = f"policies/temp/policy-{datetime.now().strftime('%y-%m-%d-%M-%S-%f')}"
+    policy_name = f"policies/temp/policy-{datetime.now().strftime('%y-%m-%d-%H-%M-%S-%f')}"
     
     player = Player("Player", policy_name, EXPLORATION_RATE, LEARNING_RATE, DISCOUNT_RATE, WALK_LENGTH)
     state = State(player, True)
