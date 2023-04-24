@@ -15,6 +15,7 @@ from mazes import MazeController
 from mazedata import MazeData######
 
 class GameController(object):
+
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode(SCREENSIZE, 0, 32)
@@ -36,6 +37,7 @@ class GameController(object):
         self.fruitNode = None
         self.maze = MazeController()
         self.mazedata = MazeData()######
+        self.skipRender = False
 
     def setBackground(self):
         self.background_norm = pygame.surface.Surface(SCREENSIZE).convert()
@@ -102,7 +104,8 @@ class GameController(object):
         
 
     def update(self):
-        dt = self.clock.tick(30) / 1000.0
+        # dt = self.clock.tick(30) / 1000.0
+        dt = 1 / 30.0 # 30frames per second
         self.textgroup.update(dt)
         self.pellets.update(dt)
         if not self.pause.paused:
@@ -132,7 +135,9 @@ class GameController(object):
         if afterPauseMethod is not None:
             afterPauseMethod()
         self.checkEvents()
-        self.render()
+
+        if self.skipRender():
+            self.render()
 
     def checkEvents(self):
         for event in pygame.event.get():
