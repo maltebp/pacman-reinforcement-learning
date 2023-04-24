@@ -90,6 +90,7 @@ class State:
                     self.p1.numIterations += 0 if iteration == 0 else 200
                     self.p1.savePolicy()
             game = GameController()
+            game.skipRender = self.isTraining
             game.startGame()
             game.update()
             pacman_target = game.nodes.getPixelsFromNode(game.pacman.target)

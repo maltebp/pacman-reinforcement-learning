@@ -104,8 +104,13 @@ class GameController(object):
         
 
     def update(self):
-        # dt = self.clock.tick(30) / 1000.0
-        dt = 1 / 30.0 # 30frames per second
+
+        dt = (
+            1 / 30.0 # 30frames per second
+            if self.skipRender else
+            self.clock.tick(30) / 1000.0 
+        )
+        
         self.textgroup.update(dt)
         self.pellets.update(dt)
         if not self.pause.paused:
@@ -136,7 +141,7 @@ class GameController(object):
             afterPauseMethod()
         self.checkEvents()
 
-        if self.skipRender():
+        if not self.skipRender:
             self.render()
 
     def checkEvents(self):
