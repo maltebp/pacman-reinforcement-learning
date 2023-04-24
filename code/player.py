@@ -4,21 +4,29 @@ import random
 from Counter import Counter
 
 class Player:
-    def __init__(self, name, exploration_rho=0.3, lr_alpha=0.2, discount_rate_gamma=0.9, walk_len_nu=0.2):
+
+    def __init__(self, name, policy_name: str, exploration_rho=0.3, lr_alpha=0.2, discount_rate_gamma=0.9, walk_len_nu=0.2):
         self.name = name
         self.exploration_rho = exploration_rho
         self.lr_alpha = lr_alpha
         self.discount_rate_gamma = discount_rate_gamma
         self.walk_len_nu = walk_len_nu
-        
+        self.policy_name = policy_name
+                
         # Q-table
         self.states_value = Counter()  # state -> value
+        
         # current score
         self.old_score = 0
+        
         # last state
         self.lastState = []
+
         # last action
         self.lastAction = []
+
+        self.numIterations = 0
+        
 
     # Get Q(s,a).
     def getQValue(self, state, action):
@@ -51,7 +59,7 @@ class Player:
     # Pacman is expected to move.
     def getAction(self, state, possible_directions, score):
         # print("___________________________")
-        print(self.states_value)
+        #print(self.states_value)
 
         # Update Q-value
         reward = score - self.old_score
@@ -94,12 +102,15 @@ class Player:
 
     # Saves the Q-table.
     def savePolicy(self):
-        fw = open('trained_controller', 'wb')
+        assert self.policy_name is not None and len(self.policy_name) > 0
+        fw = open(self.policy_name, 'wb')
         pickle.dump(self.states_value, fw)
+        pickle.dump(self.numIterations, fw)
         fw.close()
 
     # Loads a Q-table.
-    def loadPolicy(self, file):
+    def loadPolicy(self, file: str):
         fr = open(file, 'rb')
         self.states_value = pickle.load(fr)
+        self.numIterations = pickle.load(fr)
         fr.close()

@@ -1,14 +1,26 @@
 
-☐ Get overview of hand-in 2
-    ☐ Figure out how much time I have for it (estimate)
+✔ Recap Q-learning
+✔ Understand Tic-Tac-Toe example
+✔ Watch pacman exercise
+    Got to 18:00
+✔ Get overview of hand-in 2
+    ✔ Figure out how much time I have for it (estimate)
 
 ☐ Setup hand-in 2
-    ☐ Change how you run code
-    ☐ Fix update loop (it should not render)
+    ✔ Setup code
+    ✔ Change how you run code
+    ✔ Append date policy name
+    ✔ Load latest policy ()
+    ✔ Infinite training
     ☐ Write out average iterations per escond
+    ☐ Fix update loop (it should not render)
     ☐ Profile code
-    ☐ Append date policy name
-    ☐ Load latest policy ()
     ☐ Write out convergence
 
 ☐ Initial idea brainstorm on hand-in 2
+
+
+Time
+    8H, Saturday
+    3H, Monday
+    3H, Monday

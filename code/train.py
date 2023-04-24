@@ -1,3 +1,4 @@
+from datetime import datetime
 from player import *
 from state import *
 
@@ -24,8 +25,9 @@ if __name__ == "__main__":
     ITERATIONS = 10000
 
     print("Starting training")
-    
-    player = Player("Player", EXPLORATION_RATE, LEARNING_RATE, DISCOUNT_RATE, WALK_LENGTH)
-    state = State(player)
 
-    st.play(10000)
+    policy_name = f"policies/temp/policy-{datetime.now().strftime('%y-%m-%d-%M-%S-%f')}"
+    
+    player = Player("Player", policy_name, EXPLORATION_RATE, LEARNING_RATE, DISCOUNT_RATE, WALK_LENGTH)
+    state = State(player, True)
+    state.play()

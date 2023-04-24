@@ -1,14 +1,16 @@
 import math
+import time
 import pickle
 from constants import *
 from run import GameController 
 
 class State:
-    def __init__(self, p1):
+    def __init__(self, p1, isTraining: bool):
         self.state = []
         self.p1 = p1
         self.isEnd = False
         self.finalScore = 0
+        self.isTraining = isTraining
     
     def availableDirections(self, pacman):
         return pacman.validDirections()
@@ -71,12 +73,22 @@ class State:
                     game.showEntities()
 
     # Main method for training.
-    def play(self, iterations=100):
-        for i in range(iterations):
-            if i % 1000 == 0:
-                print("Iterations {}".format(i))
-            if i % 500 == 0:
-                p1.savePolicy()
+    def play(self):
+
+        startTime = time.perf_counter_ns()
+        
+        iteration = 0
+        while True:
+            iteration += 1    
+            if self.isTraining:
+                if iteration % 1 == 0: 
+                    iterationsPerSec = (iteration / (time.perf_counter_ns() - startTime)) * 1_000_000_000
+                    print(f"Iterations/second: {iterationsPerSec:.3f}")
+                if iteration % 1000 == 0:
+                    print("Iterations {}".format(iteration))
+                if iteration % 200 == 0:
+                    self.p1.numIterations += 0 if iteration == 0 else 200
+                    self.p1.savePolicy()
             game = GameController()
             game.startGame()
             game.update()
