@@ -14,11 +14,11 @@ if __name__ == "__main__":
         player.loadPolicy(sys.argv[1])            
     
     else:
-        policies = sorted(glob.glob("policies/temp/policy-*"), key=str.lower)
+        policies = sorted(glob.glob("policies/temp/policy-*"), key=str.upper)
         assert len(policies) > 0
 
-        print(f"Loading latest policy: '{policies[0]}'")
-        player.loadPolicy(policies[1])            
+        print(f"Loading latest policy: '{policies[-1]}'")
+        player.loadPolicy(policies[-1])            
         print(f"Policy iterations: {player.numIterations}")
 
     state = State(player, False)    

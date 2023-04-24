@@ -25,9 +25,10 @@ if __name__ == "__main__":
     ITERATIONS = 10000
 
     print("Starting training")
+    print("Policy file:")
 
     policy_name = f"policies/temp/policy-{datetime.now().strftime('%y-%m-%d-%H-%M-%S-%f')}"
-    
+    print("Policy file: " + policy_name)
     player = Player("Player", policy_name, EXPLORATION_RATE, LEARNING_RATE, DISCOUNT_RATE, WALK_LENGTH)
     state = State(player, True)
     state.play()
