@@ -4,6 +4,7 @@ import pickle
 from constants import *
 from player import Player
 from run import GameController 
+from run import FRAMERATE 
 
 class Statistic:
 
@@ -25,10 +26,11 @@ class Statistic:
         if self.average is None:
             self.average = float(value)
         else:
-            self.average = -self.average / self.numValues + float(value) / self.numValues
+            self.average -= self.average / self.numValues
+            self.average += float(value) / self.numValues
 
     def string(self):
-        return f'{self.average:.2},{self.min},{self.max}'
+        return f'{self.average:.2f},{self.min},{self.max}'
         
 
 class State:
@@ -132,7 +134,9 @@ class State:
             pacman_target = game.nodes.getPixelsFromNode(game.pacman.target)
             self.updateState(game.ghosts, pacman_target)
             self.level = game.level
+            numFrames = 0
             while not self.isEnd:
+                numFrames += 1
                 possible_directions = self.availableDirections(game.pacman)
                 p1_action = self.p1.getAction(self.state, possible_directions, game.score)
                 # take action and update board state
@@ -153,7 +157,7 @@ class State:
                         self.scoreStatistic.report(game.score)
                         self.pelletsStatistic.report(game.pellets.numEaten)
                         self.ghostsKilledStatistic.report(game.ghostsKilled)
-                        gameTime = (time.perf_counter_ns() - gameStartTime) / 1_000_000_000.0
+                        gameTime = float(numFrames) / FRAMERATE
                         self.timeStatistic.report(gameTime)
 
                         print(
@@ -163,7 +167,6 @@ class State:
                             f'{self.scoreStatistic.string()},' +
                             f'{self.pelletsStatistic.string()},' +
                             f'{self.ghostsKilledStatistic.string()},' +
-                            f'{self.livesStatistic.string()},' +
                             f'{self.timeStatistic.string()}'
                         )
 

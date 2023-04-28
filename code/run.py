@@ -14,6 +14,8 @@ from sprites import MazeSprites
 from mazes import MazeController
 from mazedata import MazeData######
 
+FRAMERATE = 10
+
 class GameController(object):
 
     def __init__(self):
@@ -105,8 +107,6 @@ class GameController(object):
         
 
     def update(self):
-        
-        FRAMERATE = 10
 
         dt = (
             1 / FRAMERATE # 30frames per second
