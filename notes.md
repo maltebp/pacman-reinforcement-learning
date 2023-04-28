@@ -2,7 +2,7 @@
 
 **Time**
 
-- 
+
 
 
 
@@ -13,6 +13,8 @@
 
 
 - State
+  - How to handle power pellet? (just a pool I recon)
+    - Dead ghosts should maybe be part of reward function
   - Is a ghost targeting same node as pacman
   - State of nearby nodes
   - State of nodes outside that range

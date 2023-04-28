@@ -38,6 +38,7 @@ class GameController(object):
         self.maze = MazeController()
         self.mazedata = MazeData()######
         self.skipRender = False
+        self.ghostsKilled = 0
 
     def setBackground(self):
         self.background_norm = pygame.surface.Surface(SCREENSIZE).convert()
@@ -104,13 +105,15 @@ class GameController(object):
         
 
     def update(self):
+        
+        FRAMERATE = 10
 
         dt = (
-            1 / 30.0 # 30frames per second
+            1 / FRAMERATE # 30frames per second
             if self.skipRender else
-            self.clock.tick(30) / 1000.0 
+            self.clock.tick(FRAMERATE) / 1000.0 
         )
-        
+
         self.textgroup.update(dt)
         self.pellets.update(dt)
         if not self.pause.paused:
@@ -182,7 +185,8 @@ class GameController(object):
                 if ghost.mode.current is FREIGHT:
                     self.pacman.visible = False
                     ghost.visible = False
-                    self.updateScore(ghost.points)                  
+                    self.updateScore(ghost.points)
+                    self.ghostsKilled += 1
                     self.textgroup.addText(str(ghost.points), WHITE, ghost.position.x, ghost.position.y, 8, time=1)
                     self.ghosts.updatePoints()
                     self.pause.setPause(pauseTime=1, func=self.showEntities)

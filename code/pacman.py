@@ -76,6 +76,11 @@ class Pacman(Entity):
 
     def collideCheck(self, other):
         d = self.position - other.position
+
+        # Simple optimization trick
+        if d.x > self.collideRadius + other.collideRadius: return False
+        if d.y > self.collideRadius + other.collideRadius: return False
+
         dSquared = d.magnitudeSquared()
         rSquared = (self.collideRadius + other.collideRadius)**2
         if dSquared <= rSquared:

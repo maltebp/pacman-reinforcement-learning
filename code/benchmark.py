@@ -7,7 +7,7 @@ from state import *
 
 if __name__ == "__main__":
     
-    player = Player("Demo", "", exploration_rho=0, lr_alpha=0)
+    player = Player("Benchmark", "", exploration_rho=0, lr_alpha=0)
 
     if len(sys.argv) == 2:
         print(f"Loading policy from command line: '{sys.argv[1]}'")
@@ -21,5 +21,5 @@ if __name__ == "__main__":
         player.loadPolicy(policies[-1])            
         print(f"Policy iterations: {player.numIterations}")
 
-    state = State(player, False, False)    
+    state = State(player, False, True)    
     state.play()
