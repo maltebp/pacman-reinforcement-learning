@@ -1,3 +1,4 @@
+from typing import List
 import pygame
 from pygame.locals import *
 from vector import Vector2
@@ -75,7 +76,7 @@ class Entity(object):
                 return True
         return False
 
-    def validDirections(self):
+    def validDirections(self) -> List[int]:
         directions = []
         for key in [UP, DOWN, LEFT, RIGHT]:
             if self.validDirection(key):

@@ -22,3 +22,16 @@
 - What to do about portals?
   - We cannot consider it just as a left option
   - Just have it as a 5th action option
+
+
+
+
+
+- Pellets
+  - We need to somehow encode that an action will lead to a pellet being eaten
+  - Otherwise, an action will at one point not lead to a pellet being eaten, and at another point do 
+
+
+
+- Reward of an action is based on how you got to the current state, **not the reward of taking the action**
+  - 

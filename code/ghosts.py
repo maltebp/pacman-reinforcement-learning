@@ -1,4 +1,6 @@
 import pygame
+from typing import List
+
 from pygame.locals import *
 from vector import Vector2
 from constants import *
@@ -128,7 +130,7 @@ class GhostGroup(object):
         self.pinky = Pinky(node, pacman)
         self.inky = Inky(node, pacman, self.blinky)
         self.clyde = Clyde(node, pacman)
-        self.ghosts = [self.blinky, self.pinky, self.inky, self.clyde]
+        self.ghosts: List[Ghost] = [self.blinky, self.pinky, self.inky, self.clyde]
 
     def __iter__(self):
         return iter(self.ghosts)

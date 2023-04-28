@@ -19,7 +19,9 @@ if __name__ == "__main__":
 
         print(f"Loading latest policy: '{policies[-1]}'")
         player.loadPolicy(policies[-1])            
-        print(f"Policy iterations: {player.numIterations}")
+    
+    print(f"Policy iterations: {player.numIterations}")
+    print(f"Policy size: {len(player.states_value)}")
 
     state = State(player, False, False)    
     state.play()

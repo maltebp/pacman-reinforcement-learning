@@ -12,13 +12,19 @@
     ✔ Append date policy name
     ✔ Load latest policy ()
     ✔ Infinite training
-    ☐ Write out average iterations per escond
-    ☐ Fix update loop (it should not render)
-    ☐ Profile code
-    ☐ Write out convergence
+    ✔ Write out average iterations per escond
+    ✔ Fix update loop (it should not render)
+    ✔ Profile code
 
-☐ Initial idea brainstorm on hand-in 2
-
+✔ Initial idea brainstorm on hand-in 2
+☐ Test:
+    ✔ Same target
+    ✔ head on collision
+    ✔ Dying is bad (negative reward)
+    ☐ Actions to be relative to current direction
+        Otherwise it cannot create correlation
+    ☐ Pellet or no pellet
+    
 
 Time
     8H, Saturday

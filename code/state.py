@@ -50,9 +50,6 @@ class State:
         self.timeStatistic = Statistic()
         self.ghostsKilledStatistic = Statistic()
         self.livesStatistic = Statistic()
-    
-    def availableDirections(self, pacman):
-        return pacman.validDirections()
 
     # Returns the direction of the closest ghost relative to pacman
     # if the ghost is within a certain range. Else, returns None.
@@ -81,9 +78,21 @@ class State:
             return None
 
     # Updates the state with the current game world's information.
-    def updateState(self, ghosts, pacman_target):
+    def updateState(self, game: GameController):
+        pacman_target = game.nodes.getPixelsFromNode(game.pacman.target)
+        pacman_source = game.nodes.getPixelsFromNode(game.pacman.node)
+        ghosts = game.ghosts.ghosts 
+        
         closest_ghost = self.getClosestGhostDirection(ghosts, pacman_target)
-        self.state = [int(pacman_target[0]), int(pacman_target[1]), closest_ghost]
+
+        head_on_collision_danger = any([
+            game.nodes.getPixelsFromNode(ghost.target) is pacman_source and game.nodes.getPixelsFromNode(ghost.node) is pacman_target
+            for ghost in ghosts
+        ])
+
+        same_target_ghost = any([game.nodes.getPixelsFromNode(ghost.target) is pacman_target for ghost in ghosts])
+
+        self.state = [closest_ghost, head_on_collision_danger, same_target_ghost]
     
     # Apply the chosen action (direction) to the game.
     def applyAction(self, game, direction):
@@ -122,34 +131,34 @@ class State:
             iteration += 1    
             if self.isTraining:
                 if iteration % 100 == 0:
-                    print("Iterations {}".format(iteration))
+                    print(f"Iterations: {iteration}, Q-Table size: {len(self.p1.states_value)}")
                     iterationsPerSec = (iteration / (time.perf_counter_ns() - startTime)) * 1_000_000_000
                     print(f"Iterations/second: {iterationsPerSec:.3f}")
-                    self.p1.numIterations += 0 if iteration == 0 else 200
+                    self.p1.numIterations += 0 if iteration == 0 else 100
                     self.p1.savePolicy()
             game = GameController()
             game.skipRender = self.isTraining or self.isBenchmarking
             game.startGame()
             game.update()
-            pacman_target = game.nodes.getPixelsFromNode(game.pacman.target)
-            self.updateState(game.ghosts, pacman_target)
+            self.updateState(game)
             self.level = game.level
             numFrames = 0
             while not self.isEnd:
                 numFrames += 1
-                possible_directions = self.availableDirections(game.pacman)
-                p1_action = self.p1.getAction(self.state, possible_directions, game.score)
+                possible_directions = game.pacman.validDirections()          
+                adjustedScore = game.score + 1000 * game.lives
+                p1_action = self.p1.getAction(self.state, possible_directions, adjustedScore)
                 # take action and update board state
                 self.applyAction(game, p1_action)
-                pacman_target = game.nodes.getPixelsFromNode(game.pacman.target)
-                self.updateState(game.ghosts, pacman_target)
+                self.updateState(game)
 
                 # check board status if it is end
                 self.gamePaused(game)
-                result = self.gameEnded(game)
-                if result is not None:
+                gameHasEnded = self.gameEnded(game) is not None
+                if gameHasEnded:
                     
                     if self.isBenchmarking:
+
                         self.numGames += 1
                         if game.lives > 0: self.numWins += 1
 
@@ -170,7 +179,8 @@ class State:
                             f'{self.timeStatistic.string()}'
                         )
 
-                    self.p1.final(self.state, game.score)
+                    adjustedScore = game.score + 1000 * game.lives
+                    self.p1.final(adjustedScore)
                     game.restartGame()
                     del game
                     self.isEnd = False

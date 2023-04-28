@@ -1,7 +1,9 @@
 import pickle
+from typing import Callable, List
 import numpy as np
 import random 
 from Counter import Counter
+from run import GameController
 
 class Player:
 
@@ -43,7 +45,7 @@ class Player:
         return max(q_list)
 
     # update Q value
-    def updateQ(self, state, action, reward, qmax):
+    def updateQ(self, state, action, reward,E qmax):
         q = self.getQValue(state,action)
         self.states_value[str([state,action])] = (1 - self.lr_alpha)*q + self.lr_alpha*(reward + self.discount_rate_gamma*qmax - q)
     
@@ -55,13 +57,12 @@ class Player:
         # print(tmp)
         return tmp.argMax()
     
+    
     # The main method required by the game. Called every time that
     # Pacman is expected to move.
-    def getAction(self, state, possible_directions, score):
-        # print("___________________________")
-        #print(self.states_value)
+    def getAction(self, state: List, possible_directions, score):
 
-        # Update Q-value
+        # Update Q-value of last state
         reward = score - self.old_score
         if len(self.lastState) > 0:
             last_state = self.lastState[-1]
@@ -88,7 +89,7 @@ class Player:
 
 
     # This is called by the game after a win or a loss.
-    def final(self, state, score):
+    def final(self, score: float):
         # Update Q-values.
         reward = score - self.old_score
         last_state = self.lastState[-1]
