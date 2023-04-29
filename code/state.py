@@ -2,8 +2,9 @@ from enum import Enum, auto
 import math
 import time
 import pickle
-from typing import List
+from typing import Dict, List
 from constants import *
+from ghosts import Ghost
 from nodes import Node
 from pacman import Pacman
 from player import Player
@@ -245,19 +246,31 @@ class State:
             numFrames = 0
             self.p1.resetStateHistory()
             isFirstState = True
+            previousState = None
             previousStateScore = 0
+
+            previousGhostNodes: Dict[Ghost, Node] = { }
+            for ghost in game.ghosts.ghosts:
+                previousGhostNodes[ghost] = ghost.node                
 
             while True:
 
                 numFrames += 1
 
-                isAtNewState = pacman.isAtNode
+                ghostChangedNode = False
+                for ghost in game.ghosts.ghosts:
+                    if previousGhostNodes[ghost] is not ghost.node:
+                        ghostChangedNode = True
+                    previousGhostNodes[ghost] = ghost.node     
+
+                currentState = self.generateStateString(game)
+
+                isAtNewState = pacman.isAtNode or (ghostChangedNode and currentState != previousState)
 
                 if isAtNewState:
                     # We're at a new state
 
-                    state = self.generateStateString(game)
-                    valid_directions = self.getValidRelativeDirections(game.pacman)
+                    valid_directions = self.getValidRelativeDirections(pacman)
 
                     if self.isTraining and not isFirstState:
                         # Update Q-value of previous state
@@ -270,23 +283,36 @@ class State:
                         stateScore = 0 #1000 * game.lives #+ ghostDistanceReward
                         reward = stateScore - previousStateScore
  
-                        self.p1.updateQValueOfLastState(state, reward, valid_directions)
+                        self.p1.updateQValueOfLastState(currentState, reward, valid_directions)
                         previousStateScore = stateScore 
 
-                    if len(valid_directions):
+                    if len(valid_directions) > 0:
                         # Take action
-                        chosenDirection = self.p1.chooseAction(state, valid_directions)
-                        game.pacman.learntDirection = chosenDirection.toActualDirection(game.pacman.direction)
+                        chosenDirection = self.p1.chooseAction(currentState, valid_directions)
+                        game.pacman.learntDirection = chosenDirection.toActualDirection(pacman.direction)
+                        isFirstState = False 
+
+                    previousState = currentState
+
                     
                 game.update()
 
-                gameHasEnded = game.levelLost or game.levelWon
-                if gameHasEnded:                
+                if not pacman.alive:
+
                     if not isFirstState:
                         # Update Q-value of previous state
                         state = self.generateStateString(game)
+                        reward = -1000
                         self.p1.updateQValueOfLastState(state, reward, [])
+                    
+                    if not game.levelLost:
+                        isFirstState = True
+                        self.p1.resetStateHistory()
+                        game.resetLevel()
+                        continue                
 
+                gameHasEnded = game.levelLost or game.levelWon
+                if gameHasEnded:                
                     if self.isBenchmarking:
                         self.reportStatistics(game, game.levelWon, numFrames)        
                     break

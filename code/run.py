@@ -145,9 +145,10 @@ class GameController(object):
                 else:
                     self.background = self.background_norm
 
-        afterPauseMethod = self.pause.update(dt)
-        if afterPauseMethod is not None:
-            afterPauseMethod()
+        if not self.skipRender:
+            afterPauseMethod = self.pause.update(dt)
+            if afterPauseMethod is not None:
+                afterPauseMethod()
         self.checkEvents()
 
         if not self.skipRender:
@@ -198,7 +199,8 @@ class GameController(object):
                     self.ghostsKilled += 1
                     self.textgroup.addText(str(ghost.points), WHITE, ghost.position.x, ghost.position.y, 8, time=1)
                     self.ghosts.updatePoints()
-                    self.pause.setPause(pauseTime=1, func=self.showEntities)
+                    if not self.skipRender:
+                        self.pause.setPause(pauseTime=1, func=self.showEntities)
                     ghost.startSpawn()
                     self.nodes.allowHomeAccess(ghost)
                 elif ghost.mode.current is not SPAWN:
@@ -207,9 +209,11 @@ class GameController(object):
                         self.lifesprites.removeImage()
                         self.pacman.die()               
                         self.ghosts.hide()
-                        self.levelLost = True
                         
-                        if not self.skipRender:
+                        if self.skipRender:
+                            if self.lives <= 0:
+                                self.levelLost = True
+                        else:
                             if self.lives <= 0:
                                 self.textgroup.showText(GAMEOVERTXT)
                                 self.pause.setPause(pauseTime=3, func=self.restartGame)
@@ -268,11 +272,13 @@ class GameController(object):
         self.levelWon = False
 
     def resetLevel(self):
-        self.pause.paused = True
         self.pacman.reset()
         self.ghosts.reset()
         self.fruit = None
-        self.textgroup.showText(READYTXT)
+
+        if not self.skipRender:
+            self.pause.paused = True
+            self.textgroup.showText(READYTXT)
 
     def updateScore(self, points):
         self.score += points
