@@ -283,28 +283,11 @@ class State:
 
                 gameHasEnded = self.gameEnded(game) is not None
                 if gameHasEnded:
-                    
+
+                    hasWon = game.lives
+                
                     if self.isBenchmarking:
-
-                        self.numGames += 1
-                        if game.lives > 0: self.numWins += 1
-
-                        self.livesStatistic.report(game.lives)
-                        self.scoreStatistic.report(game.score)
-                        self.pelletsStatistic.report(game.pellets.numEaten)
-                        self.ghostsKilledStatistic.report(game.ghostsKilled)
-                        gameTime = float(numFrames) / FRAMERATE
-                        self.timeStatistic.report(gameTime)
-
-                        print(
-                            f'{self.numGames},' +
-                            f'{float(self.numWins / self.numGames):.2f},' +
-                            f'{self.livesStatistic.string()},' +
-                            f'{self.scoreStatistic.string()},' +
-                            f'{self.pelletsStatistic.string()},' +
-                            f'{self.ghostsKilledStatistic.string()},' +
-                            f'{self.timeStatistic.string()}'
-                        )
+                        self.reportStatistics(game, hasWon, numFrames)        
 
                     self.p1.final()
                     game.restartGame()
@@ -315,3 +298,25 @@ class State:
                 else:
                     # next frame iteration
                     continue
+
+
+    def reportStatistics(self, game: GameController, levelWon: bool, numFrames: int):
+        self.numGames += 1
+        if levelWon > 0: self.numWins += 1
+
+        self.livesStatistic.report(game.lives)
+        self.scoreStatistic.report(game.score)
+        self.pelletsStatistic.report(game.pellets.numEaten)
+        self.ghostsKilledStatistic.report(game.ghostsKilled)
+        gameTime = float(numFrames) / FRAMERATE
+        self.timeStatistic.report(gameTime)
+
+        print(
+            f'{self.numGames},' +
+            f'{float(self.numWins / self.numGames):.2f},' +
+            f'{self.livesStatistic.string()},' +
+            f'{self.scoreStatistic.string()},' +
+            f'{self.pelletsStatistic.string()},' +
+            f'{self.ghostsKilledStatistic.string()},' +
+            f'{self.timeStatistic.string()}'
+        )
