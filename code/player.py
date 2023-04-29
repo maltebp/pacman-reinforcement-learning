@@ -72,17 +72,17 @@ class Player:
     
     # The main method required by the game. Called every time that
     # Pacman is expected to move.
-    def getAction(self, state: List, possible_directions):
+    def chooseAction(self, state: List, possibleActions):
 
         # (Explore vs Exploit)
         # Check if random action should be taken.
         rand_rho = random.uniform(0,1)
         if rand_rho < self.exploration_rho:
             # take random action
-            action = np.random.choice(possible_directions) 
+            action = np.random.choice(possibleActions) 
         else:
             # take the best action
-            action =  self.takeBestAction(state, possible_directions)
+            action =  self.takeBestAction(state, possibleActions)
 
         # Update attributes.
         self.lastState.append(state)
