@@ -244,41 +244,49 @@ class State:
             pacman = game.pacman
             numFrames = 0
             self.p1.resetStateHistory()
+            isFirstState = True
+            previousStateScore = 0
 
             while True:
 
                 numFrames += 1
 
-                
-                # Find action to take
-                madeMoveLastFrame = False
-                                
-                state = self.generateStateString(game)
-                valid_directions = self.getValidRelativeDirections(game.pacman)
-                if len(valid_directions) > 0:
-                    chosenDirection = self.p1.chooseAction(state, valid_directions)
-                    game.pacman.learntDirection = chosenDirection.toActualDirection(game.pacman.direction)
-                    madeMoveLastFrame = True
+                isAtNewState = pacman.isAtNode
+
+                if isAtNewState:
+                    # We're at a new state
+
+                    state = self.generateStateString(game)
+                    valid_directions = self.getValidRelativeDirections(game.pacman)
+
+                    if self.isTraining and not isFirstState:
+                        # Update Q-value of previous state
+                        
+                        # ghostDistances = [
+                        #     ghost.position.distanceTo(game.pacman.position)
+                        #     for ghost in game.ghosts.ghosts
+                        # ]
+                        # ghostDistanceReward = sum(d**1.5 if d < 150 else 0 for d in ghostDistances )
+                        stateScore = 0 #1000 * game.lives #+ ghostDistanceReward
+                        reward = stateScore - previousStateScore
+ 
+                        self.p1.updateQValueOfLastState(state, reward, valid_directions)
+                        previousStateScore = stateScore 
+
+                    if len(valid_directions):
+                        # Take action
+                        chosenDirection = self.p1.chooseAction(state, valid_directions)
+                        game.pacman.learntDirection = chosenDirection.toActualDirection(game.pacman.direction)
                     
                 game.update()
 
-                if self.isTraining and madeMoveLastFrame:
-                    
-                    # Update Q-Value of last state
-                    valid_directions = self.getValidRelativeDirections(game.pacman)
-
-                    ghostDistances = [
-                        ghost.position.distanceTo(game.pacman.position)
-                        for ghost in game.ghosts.ghosts
-                    ]
-                    ghostDistanceReward = sum(d**1.5 if d < 150 else 0 for d in ghostDistances )
-                
-                    adjustedScore = 1000 * game.lives #+ ghostDistanceReward
-                    state = self.generateStateString(game)
-                    self.p1.updateQValueOfLastState(state, adjustedScore, valid_directions)
-
                 gameHasEnded = game.levelLost or game.levelWon
                 if gameHasEnded:                
+                    if not isFirstState:
+                        # Update Q-value of previous state
+                        state = self.generateStateString(game)
+                        self.p1.updateQValueOfLastState(state, reward, [])
+
                     if self.isBenchmarking:
                         self.reportStatistics(game, game.levelWon, numFrames)        
                     break

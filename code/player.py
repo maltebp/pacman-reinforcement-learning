@@ -59,15 +59,13 @@ class Player:
         return tmp.argMax()
     
 
-    def updateQValueOfLastState(self, state, stateScore, possible_directions):
+    def updateQValueOfLastState(self, state, reward, possible_directions):
         # Update Q-value of last state
-        reward = stateScore - self.old_score
         if len(self.lastState) > 0:
             last_state = self.lastState[-1]
             last_action = self.lastAction[-1]
             max_q = self.getMaxQ(state, possible_directions)
             self.updateQ(last_state, last_action, reward, max_q)
-        self.old_score = stateScore
     
     
     # The main method required by the game. Called every time that
