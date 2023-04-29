@@ -202,7 +202,7 @@ class State:
     
     # Checks if game is paused i.e. after one life is lost or at the
     # beginning of new game. If it is, resumes it.
-    def gamePaused(self, game):
+    def resumseIfPaused(self, game):
         if game.pause.paused:
             if game.pacman.alive:
                 game.pause.setPause(playerPaused=True)
@@ -241,11 +241,16 @@ class State:
             game.skipRender = self.isTraining or self.isBenchmarking
             game.startGame()
             game.update()
+            pacman = game.pacman
             self.level = game.level
             numFrames = 0
             previousState = self.generateStateString(game)
 
             while not self.isEnd:
+
+                self.resumseIfPaused(game)
+
+                if not pacman.alive: continue
 
                 state = self.generateStateString(game)
 
@@ -277,9 +282,6 @@ class State:
                     adjustedScore = 1000 * game.lives #+ ghostDistanceReward
                     state = self.generateStateString(game)
                     self.p1.updateQValueOfLastState(state, adjustedScore, valid_directions)
-
-
-                self.gamePaused(game)
 
                 gameHasEnded = self.gameEnded(game) is not None
                 if gameHasEnded:
