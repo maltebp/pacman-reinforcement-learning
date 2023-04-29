@@ -28,6 +28,9 @@
         ☐ chase
         ☐ ghost target source node
         ☐ ghost target target node
+    ☐ Direction in which there are least ghosts
+        Sum inverse distance to ghosts in each direction
+        Direction with lowest value is the best direction        
     ☐ Pellet or no pellet
     
 

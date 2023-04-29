@@ -42,8 +42,6 @@ class RelativeDirection(Enum):
 
     @classmethod
     def fromActualDirection(cls, pacmanCurrentActualDirection: int, actualDirection: int):
-        assert actualDirection is not STOP
-
         if pacmanCurrentActualDirection == STOP:
             # Default to UP if actual direction is STOP
             pacmanCurrentActualDirection = UP
@@ -66,6 +64,8 @@ class RelativeDirection(Enum):
         if pacmanCurrentActualDirection == LEFT:
             if actualDirection == UP: return RelativeDirection.RIGHT
             if actualDirection == DOWN: return RelativeDirection.LEFT
+
+        assert f'Invalid direction {pacmanCurrentActualDirection}'
 
 
 
@@ -155,7 +155,7 @@ class State:
 
         same_target_ghost = any([game.nodes.getPixelsFromNode(ghost.target) is pacman_target for ghost in ghosts])
 
-        self.state = [closest_ghost, head_on_collision_danger, same_target_ghost]
+        self.state = [head_on_collision_danger, same_target_ghost]
     
     # Checks if game is over i.e. level completed or all lives lost.
     def gameEnded(self, game):
@@ -185,7 +185,6 @@ class State:
         
         iteration = 0
         while True:
-            gameStartTime = time.perf_counter_ns()
             iteration += 1    
             if self.isTraining:
                 if iteration % 100 == 0:
@@ -202,23 +201,31 @@ class State:
             self.level = game.level
             numFrames = 0
             while not self.isEnd:
-                numFrames += 1
+
+                # I believe this is the case when pacman dies, and it's doing the animation
+                skipTraining = not game.pacman.isAtNode and game.pacman.direction == STOP
+                if not skipTraining:
+
+                    numFrames += 1
+
+                    valid_directions = game.pacman.getValidDirections()
+                    valid_relative_directions = [
+                        RelativeDirection.fromActualDirection(game.pacman.direction, actualDirection)
+                        for actualDirection in valid_directions    
+                    ]
+
+                    assert len(valid_relative_directions) > 0
                 
-                valid_directions = game.pacman.validDirections()
-                valid_relative_directions = [
-                    RelativeDirection.fromActualDirection(game.pacman.direction, actualDirection)
-                    for actualDirection in valid_directions    
-                ]
-            
-                adjustedScore = game.score + 1000 * game.lives
-                chosenDirection = self.p1.getAction(self.state, valid_relative_directions, adjustedScore)
-                game.pacman.learntDirection = chosenDirection.toActualDirection(game.pacman.direction)
+                    adjustedScore = game.score + 1000 * game.lives
+                    chosenDirection = self.p1.getAction(self.state, valid_relative_directions, adjustedScore)
+                    game.pacman.learntDirection = chosenDirection.toActualDirection(game.pacman.direction)
+                    
                 game.update()
 
                 self.updateState(game)
 
-                # check board status if it is end
                 self.gamePaused(game)
+
                 gameHasEnded = self.gameEnded(game) is not None
                 if gameHasEnded:
                     

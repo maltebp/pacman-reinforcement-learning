@@ -1,5 +1,7 @@
+from typing import List
 import pygame
 from pygame.locals import *
+from nodes import Node
 from vector import Vector2
 from constants import *
 from entity import Entity
@@ -14,7 +16,8 @@ class Pacman(Entity):
         self.setBetweenNodes(LEFT)
         self.alive = True
         self.sprites = PacmanSprites(self)
-        self.learntDirection = STOP
+        self.isAtNode = False
+        self.learntDirection: int = STOP
 
     def reset(self):
         Entity.reset(self)
@@ -28,32 +31,58 @@ class Pacman(Entity):
         self.alive = False
         self.direction = STOP
 
-    def update(self, dt):
+    def update(self, dt):	
+
+        desiredDirection = self.getDesiredDirection()
+        if desiredDirection != self.direction:
+            if desiredDirection == STOP:
+                self.target = self.node
+
+            elif desiredDirection == self.direction * -1:
+                tempTarget = self.target
+                self.target = self.node
+                self.node = tempTarget
+
+            else:
+                self.target = self.node.neighbors[desiredDirection]
+            
+            self.direction = desiredDirection
+
         self.sprites.update(dt)
-        self.position += self.directions[self.direction]*self.speed*dt
-        # direction = self.getValidKey()
-        direction = self.getDirection()
+        velocity = self.directions[self.direction] * self.speed * dt
+        self.position += velocity
+        
+        if velocity.x != 0 or velocity.y != 0:
+            self.isAtNode = False
+        
         if self.overshotTarget():
             self.node = self.target
             if self.node.neighbors[PORTAL] is not None:
                 self.node = self.node.neighbors[PORTAL]
-            self.target = self.getNewTarget(direction)
-            if self.target is not self.node:
-                self.direction = direction
-            else:
-                self.target = self.getNewTarget(self.direction)
-
-            if self.target is self.node:
-                self.direction = STOP
+            if self.direction in self.validDirectionsFromNode(self.node):
+                self.target = self.node.neighbors[self.direction]
             self.setPosition()
-        else: 
-            if self.oppositeDirection(direction):
-                self.reverseDirection()
+            self.isAtNode = True
 
-    def getDirection(self):
-        return self.learntDirection 
+    def getDesiredDirection(self):
+        if self.learntDirection in self.getValidDirections():
+            return self.learntDirection
+        return self.direction
 
-    def getValidKey(self):
+    def getValidDirections(self):
+        if self.isAtNode:
+            return self.validDirectionsFromNode(self.node)
+        return [ self.direction, self.direction * -1 ]
+
+    def validDirectionsFromNode(self, node: Node):
+        validDirections: List[int] = []
+        for direction in [UP, DOWN, LEFT, RIGHT]:
+            if self.name in node.access[direction]:
+                if node.neighbors[direction] is not None:
+                    validDirections.append(direction)
+        return validDirections
+    
+    def getKeyboardDirection(self):
         key_pressed = pygame.key.get_pressed()
         if key_pressed[K_UP]:
             return UP
@@ -76,11 +105,6 @@ class Pacman(Entity):
 
     def collideCheck(self, other):
         d = self.position - other.position
-
-        # Simple optimization trick
-        if d.x > self.collideRadius + other.collideRadius: return False
-        if d.y > self.collideRadius + other.collideRadius: return False
-
         dSquared = d.magnitudeSquared()
         rSquared = (self.collideRadius + other.collideRadius)**2
         if dSquared <= rSquared:
