@@ -16,7 +16,7 @@ if __name__ == "__main__":
 
     # RHO -> Randomness of Exploration
     # how often the algorithm will take a random action, rather than the best action it knows so far.
-    EXPLORATION_RATE = 0.3
+    EXPLORATION_RATE = 0.01
 
     # NU: The Length of Walk
     # number of iterations that will be carried out in a sequence of connected actions.    

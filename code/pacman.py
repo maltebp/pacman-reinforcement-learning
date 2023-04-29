@@ -61,6 +61,8 @@ class Pacman(Entity):
                 self.node = self.node.neighbors[PORTAL]
             if self.direction in self.validDirectionsFromNode(self.node):
                 self.target = self.node.neighbors[self.direction]
+            else:
+                self.direction = STOP
             self.setPosition()
             self.isAtNode = True
 
@@ -70,8 +72,12 @@ class Pacman(Entity):
         return self.direction
 
     def getValidDirections(self):
+        if not self.alive:
+            return [ ]
         if self.isAtNode:
             return self.validDirectionsFromNode(self.node)
+        if self.direction is STOP:
+            return [ ]
         return [ self.direction, self.direction * -1 ]
 
     def validDirectionsFromNode(self, node: Node):

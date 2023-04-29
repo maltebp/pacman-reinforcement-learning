@@ -32,6 +32,7 @@
         Sum inverse distance to ghosts in each direction
         Direction with lowest value is the best direction        
     ☐ Pellet or no pellet
+    ☐ Power pellet (flag?)
     
 
 Time

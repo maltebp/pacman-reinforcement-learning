@@ -1,4 +1,5 @@
 import math
+from typing import Self
 
 class Vector2(object):
     def __init__(self, x=0, y=0):
@@ -37,6 +38,9 @@ class Vector2(object):
 
     def magnitude(self):
         return math.sqrt(self.magnitudeSquared())
+    
+    def distanceTo(self, other: Self):
+        return (other - self).magnitude()
 
     def copy(self):
         return Vector2(self.x, self.y)

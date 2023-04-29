@@ -2,7 +2,10 @@ from enum import Enum, auto
 import math
 import time
 import pickle
+from typing import List
 from constants import *
+from nodes import Node
+from pacman import Pacman
 from player import Player
 from run import GameController 
 from run import FRAMERATE 
@@ -142,20 +145,50 @@ class State:
 
     # Updates the state with the current game world's information.
     def updateState(self, game: GameController):
+        pacman = game.pacman
         pacman_target = game.nodes.getPixelsFromNode(game.pacman.target)
         pacman_source = game.nodes.getPixelsFromNode(game.pacman.node)
         ghosts = game.ghosts.ghosts 
+
+        def isGhostTargetingNode(node: Node) -> bool:
+            nonlocal game
+            return any(ghost.target is node for ghost in game.ghosts.ghosts)
         
+        def isGhostTargetingNodeFromNode(source: Node, target: Node):
+            return any(ghost.node is source and ghost.target is target for ghost in game.ghosts.ghosts)
+        
+        ghost_targeted_directions = {
+            RelativeDirection.FORWARD: False,
+            RelativeDirection.BACKWARD: False,
+            RelativeDirection.RIGHT: False,
+            RelativeDirection.LEFT: False,
+        }
+        
+        if pacman.isAtNode:
+            for validDirection in pacman.getValidDirections():
+                directionNode = pacman.node.neighbors[validDirection]
+                relativeDirection = RelativeDirection.fromActualDirection(pacman.direction, validDirection)
+                ghost_targeted_directions[relativeDirection] = (
+                    isGhostTargetingNode(directionNode) 
+                    or 
+                    isGhostTargetingNodeFromNode(directionNode, pacman.node)
+                )
+        else:
+            ghost_targeted_directions[RelativeDirection.FORWARD] = (
+                isGhostTargetingNode(pacman.target)
+                or
+                isGhostTargetingNodeFromNode(pacman.target, pacman.node)
+            )
+            ghost_targeted_directions[RelativeDirection.BACKWARD] = (
+                isGhostTargetingNode(pacman.node)
+                or
+                isGhostTargetingNodeFromNode(pacman.node, pacman.target)
+            )
+
+
         closest_ghost = self.getClosestGhostDirection(ghosts, pacman_target)
 
-        head_on_collision_danger = any([
-            game.nodes.getPixelsFromNode(ghost.target) is pacman_source and game.nodes.getPixelsFromNode(ghost.node) is pacman_target
-            for ghost in ghosts
-        ])
-
-        same_target_ghost = any([game.nodes.getPixelsFromNode(ghost.target) is pacman_target for ghost in ghosts])
-
-        self.state = [head_on_collision_danger, same_target_ghost]
+        self.state = [ghost_targeted_directions]
     
     # Checks if game is over i.e. level completed or all lives lost.
     def gameEnded(self, game):
@@ -177,6 +210,18 @@ class State:
                 if not game.pause.paused:
                     game.textgroup.hideText()
                     game.showEntities()
+
+    def getValidRelativeDirections(self, pacman: Pacman) -> List[RelativeDirection]:
+        valid_directions = pacman.getValidDirections()
+        if len(valid_directions) == 0: return [ ]
+        
+        valid_relative_directions = [
+            RelativeDirection.fromActualDirection(pacman.direction, actualDirection)
+            for actualDirection in valid_directions    
+        ]
+        assert len(valid_relative_directions) > 0
+
+        return valid_relative_directions
 
     # Main method for training.
     def play(self):
@@ -202,27 +247,36 @@ class State:
             numFrames = 0
             while not self.isEnd:
 
+                pacmanWasAlive = False
                 # I believe this is the case when pacman dies, and it's doing the animation
-                skipTraining = not game.pacman.isAtNode and game.pacman.direction == STOP
-                if not skipTraining:
+                if game.pacman.alive:
+                    # Find action to take
+
+                    pacmanWasAlive = True
 
                     numFrames += 1
-
-                    valid_directions = game.pacman.getValidDirections()
-                    valid_relative_directions = [
-                        RelativeDirection.fromActualDirection(game.pacman.direction, actualDirection)
-                        for actualDirection in valid_directions    
-                    ]
-
-                    assert len(valid_relative_directions) > 0
-                
-                    adjustedScore = game.score + 1000 * game.lives
-                    chosenDirection = self.p1.getAction(self.state, valid_relative_directions, adjustedScore)
-                    game.pacman.learntDirection = chosenDirection.toActualDirection(game.pacman.direction)
+                    
+                    valid_directions = self.getValidRelativeDirections(game.pacman)
+                    if len(valid_directions) > 0:
+                        chosenDirection = self.p1.getAction(self.state, valid_directions)
+                        game.pacman.learntDirection = chosenDirection.toActualDirection(game.pacman.direction)
                     
                 game.update()
-
                 self.updateState(game)
+
+                if self.isTraining and pacmanWasAlive:
+                    # Update Q-Value of last state
+                    valid_directions = self.getValidRelativeDirections(game.pacman)
+
+                    ghostDistances = [
+                        ghost.position.distanceTo(game.pacman.position)
+                        for ghost in game.ghosts.ghosts
+                    ]
+                    ghostDistanceReward = sum(d**1.5 if d < 150 else 0 for d in ghostDistances )
+                
+                    adjustedScore = 1000 * game.lives #+ ghostDistanceReward
+                    self.p1.updateQValueOfLastState(self.state, adjustedScore, valid_directions)
+
 
                 self.gamePaused(game)
 
@@ -251,8 +305,7 @@ class State:
                             f'{self.timeStatistic.string()}'
                         )
 
-                    adjustedScore = game.score + 1000 * game.lives
-                    self.p1.final(adjustedScore)
+                    self.p1.final()
                     game.restartGame()
                     del game
                     self.isEnd = False

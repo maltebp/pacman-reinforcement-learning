@@ -58,18 +58,21 @@ class Player:
         # print(tmp)
         return tmp.argMax()
     
-    
-    # The main method required by the game. Called every time that
-    # Pacman is expected to move.
-    def getAction(self, state: List, possible_directions, score):
 
+    def updateQValueOfLastState(self, state, stateScore, possible_directions):
         # Update Q-value of last state
-        reward = score - self.old_score
+        reward = stateScore - self.old_score
         if len(self.lastState) > 0:
             last_state = self.lastState[-1]
             last_action = self.lastAction[-1]
             max_q = self.getMaxQ(state, possible_directions)
             self.updateQ(last_state, last_action, reward, max_q)
+        self.old_score = stateScore
+    
+    
+    # The main method required by the game. Called every time that
+    # Pacman is expected to move.
+    def getAction(self, state: List, possible_directions):
 
         # (Explore vs Exploit)
         # Check if random action should be taken.
@@ -82,7 +85,6 @@ class Player:
             action =  self.takeBestAction(state, possible_directions)
 
         # Update attributes.
-        self.old_score = score
         self.lastState.append(state)
         self.lastAction.append(action)
 
@@ -90,13 +92,7 @@ class Player:
 
 
     # This is called by the game after a win or a loss.
-    def final(self, score: float):
-        # Update Q-values.
-        reward = score - self.old_score
-        last_state = self.lastState[-1]
-        last_action = self.lastAction[-1]
-        self.updateQ(last_state, last_action, reward, 0)
-
+    def final(self):
         # Reset attributes.
         self.old_score = 0
         self.lastState = []
