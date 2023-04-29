@@ -5,6 +5,7 @@ import random
 from Counter import Counter
 from run import GameController
 
+
 class Player:
 
     def __init__(self, name, policy_name: str, exploration_rho=0.3, lr_alpha=0.2, discount_rate_gamma=0.9, walk_len_nu=0.2):
@@ -45,7 +46,7 @@ class Player:
         return max(q_list)
 
     # update Q value
-    def updateQ(self, state, action, reward,E qmax):
+    def updateQ(self, state, action, reward, qmax):
         q = self.getQValue(state,action)
         self.states_value[str([state,action])] = (1 - self.lr_alpha)*q + self.lr_alpha*(reward + self.discount_rate_gamma*qmax - q)
     

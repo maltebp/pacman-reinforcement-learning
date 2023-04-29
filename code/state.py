@@ -1,3 +1,4 @@
+from enum import Enum, auto
 import math
 import time
 import pickle
@@ -5,6 +6,68 @@ from constants import *
 from player import Player
 from run import GameController 
 from run import FRAMERATE 
+
+class RelativeDirection(Enum):
+    FORWARD = auto(),
+    BACKWARD = auto(),
+    RIGHT = auto(),
+    LEFT = auto()
+
+    def toActualDirection(self, pacmanCurrentActualDirection: int) -> int:
+        
+        if pacmanCurrentActualDirection == STOP:
+            # Default to UP if actual direction is STOP
+            pacmanCurrentActualDirection = UP
+
+        if self == RelativeDirection.FORWARD: return pacmanCurrentActualDirection
+        if self == RelativeDirection.BACKWARD: return pacmanCurrentActualDirection * -1
+
+        if pacmanCurrentActualDirection == UP:
+            if self == RelativeDirection.RIGHT: return RIGHT
+            if self == RelativeDirection.LEFT: return LEFT
+        
+        if pacmanCurrentActualDirection == DOWN:
+            if self == RelativeDirection.RIGHT: return LEFT
+            if self == RelativeDirection.LEFT: return RIGHT
+
+        if pacmanCurrentActualDirection == RIGHT:
+            if self == RelativeDirection.RIGHT: return DOWN
+            if self == RelativeDirection.LEFT: return UP
+        
+        if pacmanCurrentActualDirection == LEFT:
+            if self == RelativeDirection.RIGHT: return UP
+            if self == RelativeDirection.LEFT: return DOWN
+        
+        assert f"Invald pacman direction {pacmanCurrentActualDirection}"
+
+    @classmethod
+    def fromActualDirection(cls, pacmanCurrentActualDirection: int, actualDirection: int):
+        assert actualDirection is not STOP
+
+        if pacmanCurrentActualDirection == STOP:
+            # Default to UP if actual direction is STOP
+            pacmanCurrentActualDirection = UP
+
+        if pacmanCurrentActualDirection == actualDirection: return RelativeDirection.FORWARD
+        if pacmanCurrentActualDirection == actualDirection * -1: return RelativeDirection.BACKWARD
+        
+        if pacmanCurrentActualDirection == UP:
+            if actualDirection == RIGHT: return RelativeDirection.RIGHT
+            if actualDirection == LEFT: return RelativeDirection.LEFT
+
+        if pacmanCurrentActualDirection == DOWN:
+            if actualDirection == RIGHT: return RelativeDirection.LEFT
+            if actualDirection == LEFT: return RelativeDirection.RIGHT
+
+        if pacmanCurrentActualDirection == RIGHT:
+            if actualDirection == UP: return RelativeDirection.LEFT
+            if actualDirection == DOWN: return RelativeDirection.RIGHT
+
+        if pacmanCurrentActualDirection == LEFT:
+            if actualDirection == UP: return RelativeDirection.RIGHT
+            if actualDirection == DOWN: return RelativeDirection.LEFT
+
+
 
 class Statistic:
 
@@ -94,11 +157,6 @@ class State:
 
         self.state = [closest_ghost, head_on_collision_danger, same_target_ghost]
     
-    # Apply the chosen action (direction) to the game.
-    def applyAction(self, game, direction):
-        game.pacman.learntDirection = direction
-        game.update()
-    
     # Checks if game is over i.e. level completed or all lives lost.
     def gameEnded(self, game):
         if game.lives <= 0 :
@@ -145,11 +203,18 @@ class State:
             numFrames = 0
             while not self.isEnd:
                 numFrames += 1
-                possible_directions = game.pacman.validDirections()          
+                
+                valid_directions = game.pacman.validDirections()
+                valid_relative_directions = [
+                    RelativeDirection.fromActualDirection(game.pacman.direction, actualDirection)
+                    for actualDirection in valid_directions    
+                ]
+            
                 adjustedScore = game.score + 1000 * game.lives
-                p1_action = self.p1.getAction(self.state, possible_directions, adjustedScore)
-                # take action and update board state
-                self.applyAction(game, p1_action)
+                chosenDirection = self.p1.getAction(self.state, valid_relative_directions, adjustedScore)
+                game.pacman.learntDirection = chosenDirection.toActualDirection(game.pacman.direction)
+                game.update()
+
                 self.updateState(game)
 
                 # check board status if it is end
