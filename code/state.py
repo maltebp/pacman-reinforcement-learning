@@ -247,19 +247,18 @@ class State:
 
             while True:
 
-                state = self.generateStateString(game)
+                numFrames += 1
 
+                
+                # Find action to take
                 madeMoveLastFrame = False
-                if game.pacman.alive:
-
-                    # Find action to take
-                    numFrames += 1
-                    
-                    valid_directions = self.getValidRelativeDirections(game.pacman)
-                    if len(valid_directions) > 0:
-                        chosenDirection = self.p1.chooseAction(state, valid_directions)
-                        game.pacman.learntDirection = chosenDirection.toActualDirection(game.pacman.direction)
-                        madeMoveLastFrame = True
+                                
+                state = self.generateStateString(game)
+                valid_directions = self.getValidRelativeDirections(game.pacman)
+                if len(valid_directions) > 0:
+                    chosenDirection = self.p1.chooseAction(state, valid_directions)
+                    game.pacman.learntDirection = chosenDirection.toActualDirection(game.pacman.direction)
+                    madeMoveLastFrame = True
                     
                 game.update()
 
