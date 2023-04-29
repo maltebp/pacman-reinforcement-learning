@@ -92,7 +92,7 @@ class Player:
 
 
     # This is called by the game after a win or a loss.
-    def final(self):
+    def resetStateHistory(self):
         # Reset attributes.
         self.old_score = 0
         self.lastState = []

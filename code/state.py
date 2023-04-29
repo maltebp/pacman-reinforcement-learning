@@ -237,20 +237,15 @@ class State:
                     print(f"Iterations/second: {iterationsPerSec:.3f}")
                     self.p1.numIterations += 0 if iteration == 0 else 100
                     self.p1.savePolicy()
-            game = GameController()
-            game.skipRender = self.isTraining or self.isBenchmarking
+            skipRender = self.isTraining or self.isBenchmarking
+            game = GameController(skipRender)
             game.startGame()
             game.update()
             pacman = game.pacman
-            self.level = game.level
             numFrames = 0
-            previousState = self.generateStateString(game)
+            self.p1.resetStateHistory()
 
-            while not self.isEnd:
-
-                self.resumseIfPaused(game)
-
-                if not pacman.alive: continue
+            while True:
 
                 state = self.generateStateString(game)
 
@@ -283,23 +278,13 @@ class State:
                     state = self.generateStateString(game)
                     self.p1.updateQValueOfLastState(state, adjustedScore, valid_directions)
 
-                gameHasEnded = self.gameEnded(game) is not None
-                if gameHasEnded:
-
-                    hasWon = game.lives
-                
+                gameHasEnded = game.levelLost or game.levelWon
+                if gameHasEnded:                
                     if self.isBenchmarking:
-                        self.reportStatistics(game, hasWon, numFrames)        
-
-                    self.p1.final()
-                    game.restartGame()
-                    del game
-                    self.isEnd = False
+                        self.reportStatistics(game, game.levelWon, numFrames)        
                     break
 
-                else:
-                    # next frame iteration
-                    continue
+            del game
 
 
     def reportStatistics(self, game: GameController, levelWon: bool, numFrames: int):

@@ -18,15 +18,16 @@ FRAMERATE = 10
 
 class GameController(object):
 
-    def __init__(self):
+    def __init__(self, skipRender: bool):
         pygame.init()
+        self.skipRender = skipRender
         self.screen = pygame.display.set_mode(SCREENSIZE, 0, 32)
         self.background = None
         self.background_norm = None
         self.background_flash = None
         self.clock = pygame.time.Clock()
         self.fruit = None
-        self.pause = Pause(True)
+        self.pause = Pause(not self.skipRender)
         self.level = 0
         self.lives = 5
         self.score = 0
@@ -39,8 +40,10 @@ class GameController(object):
         self.fruitNode = None
         self.maze = MazeController()
         self.mazedata = MazeData()######
-        self.skipRender = False
+        
         self.ghostsKilled = 0
+        self.levelWon = False
+        self.levelLost = False
 
     def setBackground(self):
         self.background_norm = pygame.surface.Surface(SCREENSIZE).convert()
@@ -53,6 +56,9 @@ class GameController(object):
         self.background = self.background_norm
 
     def startGame(self):      
+        self.levelLost = False
+        self.levelWon = False
+
         self.mazedata.loadMaze(self.level)
         self.mazesprites = MazeSprites(self.mazedata.obj.name+".txt", self.mazedata.obj.name+"_rotation.txt")
         self.setBackground()
@@ -152,7 +158,7 @@ class GameController(object):
             if event.type == QUIT:
                 exit()
             elif event.type == KEYDOWN:
-                if event.key == K_SPACE:
+                if event.key == K_SPACE and not self.skipRender:
                     if self.pacman.alive:
                         self.pause.setPause(playerPaused=True)
                         if not self.pause.paused:
@@ -175,9 +181,12 @@ class GameController(object):
             if pellet.name == POWERPELLET:
                 self.ghosts.startFreight()
             if self.pellets.isEmpty():
-                self.flashBG = True
-                self.hideEntities()
-                self.pause.setPause(pauseTime=3, func=self.nextLevel)
+                self.levelWon = True
+                
+                if not self.skipRender:
+                    self.flashBG = True
+                    self.hideEntities()
+                    self.pause.setPause(pauseTime=3, func=self.nextLevel)
 
     def checkGhostEvents(self):
         for ghost in self.ghosts:
@@ -198,11 +207,15 @@ class GameController(object):
                         self.lifesprites.removeImage()
                         self.pacman.die()               
                         self.ghosts.hide()
-                        if self.lives <= 0:
-                            self.textgroup.showText(GAMEOVERTXT)
-                            self.pause.setPause(pauseTime=3, func=self.restartGame)
-                        else:
-                            self.pause.setPause(pauseTime=3, func=self.resetLevel)
+                        self.levelLost = True
+                        
+                        if not self.skipRender:
+                            if self.lives <= 0:
+                                self.textgroup.showText(GAMEOVERTXT)
+                                self.pause.setPause(pauseTime=3, func=self.restartGame)
+                            else:
+                                self.pause.setPause(pauseTime=3, func=self.resetLevel)
+                        return
     
     def checkFruitEvents(self):
         if self.pellets.numEaten == 50 or self.pellets.numEaten == 140:
@@ -251,6 +264,8 @@ class GameController(object):
         self.textgroup.showText(READYTXT)
         self.lifesprites.resetLives(self.lives)
         self.fruitCaptured = []
+        self.levelLost = False
+        self.levelWon = False
 
     def resetLevel(self):
         self.pause.paused = True
