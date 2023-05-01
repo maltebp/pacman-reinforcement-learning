@@ -44,6 +44,12 @@ class RelativeDirection(Enum):
         
         assert f"Invald pacman direction {pacmanCurrentActualDirection}"
 
+    def __str__(self):
+        return self.name
+    
+    def __repr__(self):
+        return self.name
+
     @classmethod
     def fromActualDirection(cls, pacmanCurrentActualDirection: int, actualDirection: int):
         if pacmanCurrentActualDirection == STOP:
@@ -157,6 +163,10 @@ class State:
         def isGhostTargetingNodeFromNode(source: Node, target: Node):
             return any(ghost.node is source and ghost.target is target for ghost in game.ghosts.ghosts)
         
+        def isGhostTargetingNodeNotFromNode(invalidSource: Node, target) -> bool:
+            nonlocal game
+            return any(ghost.node is not invalidSource and ghost.target is target for ghost in game.ghosts.ghosts)
+        
         ghost_targeted_directions = {
             RelativeDirection.FORWARD: False,
             RelativeDirection.BACKWARD: False,
@@ -169,21 +179,34 @@ class State:
                 directionNode = pacman.node.neighbors[validDirection]
                 relativeDirection = RelativeDirection.fromActualDirection(pacman.direction, validDirection)
                 ghost_targeted_directions[relativeDirection] = (
-                    isGhostTargetingNode(directionNode) 
+                    isGhostTargetingNodeNotFromNode(pacman.node, directionNode) 
                     or 
                     isGhostTargetingNodeFromNode(directionNode, pacman.node)
                 )
         else:
-            ghost_targeted_directions[RelativeDirection.FORWARD] = (
-                isGhostTargetingNode(pacman.target)
-                or
-                isGhostTargetingNodeFromNode(pacman.target, pacman.node)
-            )
-            ghost_targeted_directions[RelativeDirection.BACKWARD] = (
-                isGhostTargetingNode(pacman.node)
-                or
-                isGhostTargetingNodeFromNode(pacman.node, pacman.target)
-            )
+            for ghost in game.ghosts.ghosts:
+                
+                if ghost.target is pacman.target:
+                    if ghost.node is not pacman.node:
+                        ghost_targeted_directions[RelativeDirection.FORWARD] = True
+                    else:
+                        # Ghost is on same edge as pacman, moving in same direction
+                        ghostDistanceToPacmanTarget = ghost.position.distanceTo(pacman.target.position)
+                        pacmanDistanceToPacmanTarget = pacman.position.distanceTo(pacman.target.position)
+                        if ghostDistanceToPacmanTarget > pacmanDistanceToPacmanTarget:
+                            # Ghost is behind of pacman
+                            ghost_targeted_directions[RelativeDirection.BACKWARD] = True
+
+                if ghost.target is pacman.node:
+                    if ghost.node is not pacman.target:
+                        ghost_targeted_directions[RelativeDirection.BACKWARD] = True
+                    else:
+                        # Ghost is on same edge as pacman, moving in opposite direction
+                        ghostDistanceToPacmanSource = ghost.position.distanceTo(pacman.node.position)
+                        pacmanDistanceToPacmanSource = pacman.position.distanceTo(pacman.node.position)
+                        if ghostDistanceToPacmanSource > pacmanDistanceToPacmanSource:
+                            # Ghost is in front of pacman
+                            ghost_targeted_directions[RelativeDirection.FORWARD] = True
 
 
         closest_ghost = self.getClosestGhostDirection(ghosts, pacman_target)
@@ -238,6 +261,9 @@ class State:
                     print(f"Iterations/second: {iterationsPerSec:.3f}")
                     self.p1.numIterations += 0 if iteration == 0 else 100
                     self.p1.savePolicy()
+                    for state in self.p1.states_value:
+                        print(f'  {state}: {self.p1.states_value[state]}')
+                        
             skipRender = self.isTraining or self.isBenchmarking
             game = GameController(skipRender)
             game.startGame()
@@ -265,10 +291,14 @@ class State:
 
                 currentState = self.generateStateString(game)
 
-                isAtNewState = pacman.isAtNode or (ghostChangedNode and currentState != previousState)
+                isAtNewState = pacman.isAtNode or currentState != previousState
 
+                #print(pacman.direction)
                 if isAtNewState:
                     # We're at a new state
+
+                    #print(f"New state: {currentState}")
+                    #print(f"  isAtNode={pacman.isAtNode}")
 
                     valid_directions = self.getValidRelativeDirections(pacman)
 
@@ -291,6 +321,7 @@ class State:
                         chosenDirection = self.p1.chooseAction(currentState, valid_directions)
                         game.pacman.learntDirection = chosenDirection.toActualDirection(pacman.direction)
                         isFirstState = False 
+                        #print(f"  action={chosenDirection}")
 
                     previousState = currentState
 

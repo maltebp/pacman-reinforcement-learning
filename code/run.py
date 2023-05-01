@@ -42,6 +42,7 @@ class GameController(object):
         self.mazedata = MazeData()######
         
         self.ghostsKilled = 0
+        self.killingGhost = None
         self.levelWon = False
         self.levelLost = False
 
@@ -58,6 +59,7 @@ class GameController(object):
     def startGame(self):      
         self.levelLost = False
         self.levelWon = False
+        self.killingGhost = None
 
         self.mazedata.loadMaze(self.level)
         self.mazesprites = MazeSprites(self.mazedata.obj.name+".txt", self.mazedata.obj.name+"_rotation.txt")
@@ -119,6 +121,10 @@ class GameController(object):
             if self.skipRender else
             self.clock.tick(FRAMERATE) / 1000.0 
         )
+        
+        if self.pacman.alive:
+            if not self.pause.paused:
+                self.pacman.update(dt)
 
         self.textgroup.update(dt)
         self.pellets.update(dt)
@@ -130,9 +136,6 @@ class GameController(object):
             self.checkGhostEvents()
             self.checkFruitEvents()
 
-        if self.pacman.alive:
-            if not self.pause.paused:
-                self.pacman.update(dt)
         else:
             self.pacman.update(dt)
 
@@ -209,6 +212,7 @@ class GameController(object):
                         self.lifesprites.removeImage()
                         self.pacman.die()               
                         self.ghosts.hide()
+                        self.killingGhost = ghost
                         
                         if self.skipRender:
                             if self.lives <= 0:
@@ -270,11 +274,13 @@ class GameController(object):
         self.fruitCaptured = []
         self.levelLost = False
         self.levelWon = False
+        self.killingGhost = None
 
     def resetLevel(self):
         self.pacman.reset()
         self.ghosts.reset()
         self.fruit = None
+        self.killingGhost = None
 
         if not self.skipRender:
             self.pause.paused = True

@@ -1,6 +1,7 @@
 from typing import List
 import pygame
 from pygame.locals import *
+from nodes import Node
 from vector import Vector2
 from constants import *
 from random import randint
@@ -100,7 +101,7 @@ class Entity(object):
     def setStartNode(self, node):
         self.node = node
         self.startNode = node
-        self.target = node
+        self.target: Node = node
         self.setPosition()
 
     def setBetweenNodes(self, direction):

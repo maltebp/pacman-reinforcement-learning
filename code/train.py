@@ -8,7 +8,7 @@ if __name__ == "__main__":
     #### PARAMETERS:
     # ALPHA -> Learning Rate
     # controls how much influence the current feedback value has over the stored Q-value.
-    LEARNING_RATE = 0.2
+    LEARNING_RATE = 0.25
 
     # GAMMA -> Discount Rate
     # how much an action’s Q-value depends on the Q-value at the state (or states) it leads to.
@@ -16,7 +16,7 @@ if __name__ == "__main__":
 
     # RHO -> Randomness of Exploration
     # how often the algorithm will take a random action, rather than the best action it knows so far.
-    EXPLORATION_RATE = 0.1
+    EXPLORATION_RATE = 0.2
 
     # NU: The Length of Walk
     # number of iterations that will be carried out in a sequence of connected actions.    
