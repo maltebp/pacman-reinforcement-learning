@@ -23,6 +23,8 @@ class Pacman(Entity):
         Entity.reset(self)
         self.direction = LEFT
         self.setBetweenNodes(LEFT)
+        self.isAtNode = False
+        self.learntDirection = STOP
         self.alive = True
         self.image = self.sprites.getStartImage()
         self.sprites.reset()

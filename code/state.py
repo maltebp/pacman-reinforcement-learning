@@ -1,15 +1,18 @@
 from enum import Enum, auto
 import math
+import sys
 import time
 import pickle
-from typing import Dict, List
+from typing import Dict, Iterable, List, Tuple
 from constants import *
 from ghosts import Ghost
 from nodes import Node
 from pacman import Pacman
+from pellets import Pellet
 from player import Player
 from run import GameController 
-from run import FRAMERATE 
+from run import FRAMERATE
+from vector import Vector2 
 
 class RelativeDirection(Enum):
     FORWARD = auto(),
@@ -209,9 +212,98 @@ class State:
                             ghost_targeted_directions[RelativeDirection.FORWARD] = True
 
 
-        closest_ghost = self.getClosestGhostDirection(ghosts, pacman_target)
+        # closest_ghost = self.getClosestGhostDirection(ghosts, pacman_target)
 
-        return str([ ghost_targeted_directions ]) 
+        directions_has_pellets = State.getDirectionsPelletState(game)
+
+        return str([ ghost_targeted_directions, directions_has_pellets ]) 
+    
+    
+    def getDirectionsPelletState(game: GameController):
+        pacman = game.pacman
+        pellets = game.pellets.pelletList
+
+        directions_has_pellets = {
+            RelativeDirection.FORWARD: False,
+            RelativeDirection.BACKWARD: False,
+            RelativeDirection.RIGHT: False,
+            RelativeDirection.LEFT: False,
+        }
+        
+        if pacman.isAtNode:
+            for validDirection in pacman.getValidDirections():
+                directionNode = pacman.node.neighbors[validDirection]
+                relativeDirection = RelativeDirection.fromActualDirection(pacman.direction, validDirection)
+                directions_has_pellets[relativeDirection] = State.edgeHasPellet(pacman.node.position, directionNode.position, pellets)
+        else:
+
+            # Check if forward has pellets
+            directions_has_pellets[RelativeDirection.FORWARD] = (
+                    State.edgeHasPellet(pacman.position, pacman.target.position, pellets)
+            )
+
+            # if not directions_has_pellets[RelativeDirection.FORWARD]:
+            #     for direction in pacman.target.neighbors:
+            #         if direction == PORTAL: continue
+            #         targetNeighbor = pacman.target.neighbors[direction]
+            #         if targetNeighbor is None: continue
+            #         if State.edgeHasPellet(pacman.target.position, targetNeighbor.position, pellets):
+            #              directions_has_pellets[RelativeDirection.FORWARD] = True
+            #              break
+                    
+            # Check if backward has pellets
+            directions_has_pellets[RelativeDirection.BACKWARD] = (
+                    State.edgeHasPellet(pacman.position, pacman.node.position, pellets)
+            )
+
+            # if not directions_has_pellets[RelativeDirection.BACKWARD]:
+            #     for direction in pacman.node.neighbors:
+            #         if direction == PORTAL: continue
+            #         sourceNeighbor = pacman.node.neighbors[direction]
+            #         if sourceNeighbor is None: continue
+            #         if State.edgeHasPellet(pacman.node.position, sourceNeighbor.position, pellets):
+            #              directions_has_pellets[RelativeDirection.BACKWARD] = True
+            #              break
+                    
+        return directions_has_pellets
+    
+    def edgeHasPellet(edgeStart: Vector2, edgeEnd: Vector2, pellets: Iterable[Pellet]):
+        def almost_equal(f1: float, f2: float):
+            return abs(f1 - f2) < sys.float_info.epsilon
+        
+        def is_within_interval(value: float, bound1: float, bound2: float):
+            min = bound1 if bound1 < bound2 else bound2
+            max = bound1 if bound1 > bound2 else bound2
+            if almost_equal(value, min): return True
+            if almost_equal(value, max): return True
+            if value > min and value < max: return True
+            return False
+    
+        startX = edgeStart.x
+        startY = edgeStart.y
+        endX = edgeEnd.x
+        endY = edgeEnd.y
+
+        for pellet in pellets:
+            pelletX = pellet.position.x
+            pelletY = pellet.position.y
+
+            if almost_equal(startX, endX):
+                pelletIsOnEdge = almost_equal(pelletX, startX) and is_within_interval(pelletY, startY, endY)
+                if pelletIsOnEdge:
+                    return True
+                continue
+
+            if almost_equal(startY, endY):
+                pelletIsOnEdge = almost_equal(pelletY, startY) and is_within_interval(pelletX, startX, endX)
+                if pelletIsOnEdge:
+                    return True
+                continue
+
+            assert False, "Nodes are not part of same edge"         
+
+        return False
+
     
     # Checks if game is over i.e. level completed or all lives lost.
     def gameEnded(self, game):
@@ -306,6 +398,9 @@ class State:
                 
                     valid_directions = self.getValidRelativeDirections(pacman)
 
+                    if not self.isTraining and not isFirstState:
+                        print(currentState)
+
                     if self.isTraining and not isFirstState:
                         # Update Q-value of previous state
                         
@@ -324,9 +419,11 @@ class State:
                         # Take action
                         chosenDirection = self.p1.chooseAction(currentState, valid_directions)
                         game.pacman.learntDirection = chosenDirection.toActualDirection(pacman.direction)
-                        isFirstState = False 
                         # print(f"  action={chosenDirection}")
-
+                        isFirstState = False 
+                    else:
+                        game.pacman.learntDirection = STOP
+                    
                     previousState = currentState
 
                 game.update()

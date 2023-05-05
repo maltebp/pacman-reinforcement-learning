@@ -138,7 +138,6 @@ class GameController(object):
             self.checkGhostEvents()
             self.checkFruitEvents()
 
-
         if self.flashBG:
             self.flashTimer += dt
             if self.flashTimer >= self.flashTime:
