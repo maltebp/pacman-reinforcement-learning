@@ -38,31 +38,44 @@ class Pacman(Entity):
             if desiredDirection == STOP:
                 self.target = self.node
 
+            elif self.isAtNode:
+                self.target = self.node.neighbors[desiredDirection]
+
             elif desiredDirection == self.direction * -1:
                 tempTarget = self.target
                 self.target = self.node
                 self.node = tempTarget
 
             else:
-                self.target = self.node.neighbors[desiredDirection]
+                assert "Invalid situation - check it out!"
             
             self.direction = desiredDirection
+            # print(f"Pacman new direction: {self.direction}")
+
+        oldPosition = self.position.copy();
 
         self.sprites.update(dt)
         velocity = self.directions[self.direction] * self.speed * dt
         self.position += velocity
+
+        # print(f'Pacman moving: {oldPosition} -> {self.position}  (direction={self.direction})')
+        oldPosition = self.position.copy();
         
         if velocity.x != 0 or velocity.y != 0:
             self.isAtNode = False
         
         if self.overshotTarget():
+            # print("Pacman overshot target")
             self.node = self.target
             if self.node.neighbors[PORTAL] is not None:
                 self.node = self.node.neighbors[PORTAL]
+            
             if self.direction in self.validDirectionsFromNode(self.node):
                 self.target = self.node.neighbors[self.direction]
             else:
+                self.target = self.node
                 self.direction = STOP
+
             self.setPosition()
             self.isAtNode = True
 
