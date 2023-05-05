@@ -339,11 +339,13 @@ class State:
                         reward = -1000
                         self.p1.updateQValueOfLastState(state, reward, [])
                     
-                    if not game.levelLost:
+                    attemptsRemaining = not game.levelLost
+                    if attemptsRemaining:
+                        game.resetLevel()
+                        previousState = None 
                         isFirstState = True
                         self.p1.resetStateHistory()
-                        game.resetLevel()
-                        continue                
+                        continue                    
 
                 gameHasEnded = game.levelLost or game.levelWon
                 if gameHasEnded:                
