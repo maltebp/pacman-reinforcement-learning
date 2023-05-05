@@ -51,7 +51,7 @@ class ModeController(object):
     def setFreightMode(self):
         if self.current in [SCATTER, CHASE]:
             self.timer = 0
-            self.time = 7/5
+            self.time = 7
             self.current = FREIGHT
         elif self.current is FREIGHT:
             self.timer = 0

@@ -218,6 +218,8 @@ class State:
 
         return str([ ghost_targeted_directions, directions_has_pellets ]) 
     
+
+    
     
     def getDirectionsPelletState(game: GameController):
         pacman = game.pacman
@@ -284,25 +286,26 @@ class State:
         endX = edgeEnd.x
         endY = edgeEnd.y
 
-        for pellet in pellets:
-            pelletX = pellet.position.x
-            pelletY = pellet.position.y
-
-            if almost_equal(startX, endX):
+        if almost_equal(startX, endX):
+            for pellet in pellets:
+                pelletX = pellet.position.x
+                pelletY = pellet.position.y
                 pelletIsOnEdge = almost_equal(pelletX, startX) and is_within_interval(pelletY, startY, endY)
                 if pelletIsOnEdge:
                     return True
-                continue
+            
+            return False
 
-            if almost_equal(startY, endY):
+        if almost_equal(startY, endY):
+            for pellet in pellets:
+                pelletX = pellet.position.x
+                pelletY = pellet.position.y           
                 pelletIsOnEdge = almost_equal(pelletY, startY) and is_within_interval(pelletX, startX, endX)
                 if pelletIsOnEdge:
                     return True
-                continue
-
-            assert False, "Nodes are not part of same edge"         
-
-        return False
+            return False
+        
+        assert False, "Nodes are not part of same edge"         
 
     
     # Checks if game is over i.e. level completed or all lives lost.
@@ -398,9 +401,6 @@ class State:
                 
                     valid_directions = self.getValidRelativeDirections(pacman)
 
-                    if not self.isTraining and not isFirstState:
-                        print(currentState)
-
                     if self.isTraining and not isFirstState:
                         # Update Q-value of previous state
                         
@@ -409,7 +409,7 @@ class State:
                         #     for ghost in game.ghosts.ghosts
                         # ]
                         # ghostDistanceReward = sum(d**1.5 if d < 150 else 0 for d in ghostDistances )
-                        stateScore = 0 #1000 * game.lives #+ ghostDistanceReward
+                        stateScore = game.score
                         reward = stateScore - previousStateScore
  
                         self.p1.updateQValueOfLastState(currentState, reward, valid_directions)
@@ -430,7 +430,7 @@ class State:
 
                 if not pacman.alive:
 
-                    if not isFirstState:
+                    if not isFirstState and self.isTraining:
                         # Update Q-value of previous state
                         state = self.generateStateString(game)
                         reward = -1000
