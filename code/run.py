@@ -125,6 +125,8 @@ class GameController(object):
         if self.pacman.alive:
             if not self.pause.paused:
                 self.pacman.update(dt)
+        else:
+            self.pacman.update(dt)
 
         self.textgroup.update(dt)
         self.pellets.update(dt)
@@ -136,8 +138,6 @@ class GameController(object):
             self.checkGhostEvents()
             self.checkFruitEvents()
 
-        else:
-            self.pacman.update(dt)
 
         if self.flashBG:
             self.flashTimer += dt
