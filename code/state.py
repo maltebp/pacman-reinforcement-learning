@@ -211,9 +211,6 @@ class State:
                             # Ghost is in front of pacman
                             ghost_targeted_directions[RelativeDirection.FORWARD] = True
 
-
-        # closest_ghost = self.getClosestGhostDirection(ghosts, pacman_target)
-
         directions_has_pellets = State.getDirectionsPelletState(game)
         direction_to_closest_pellet = State.directionToClosestPellet(pacman, game.pellets.pelletList)
 
@@ -224,24 +221,24 @@ class State:
         closestPellet = State.getClosestPellet(pacman.position, pellets)
         if closestPellet == None:
             # This should only happen when game is done
-            return RelativeDirection.UP
+            return RelativeDirection.FORWARD
         
         relativePelletPosition = closestPellet.position - pacman.position
         angleToPellet = math.atan2(-relativePelletPosition.y, relativePelletPosition.x)
         
-        if angleToPellet < math.pi/4 and angleToPellet > -math.pi/4:
+        if angleToPellet <= math.pi/4 and angleToPellet >= -math.pi/4:
             return RelativeDirection.fromActualDirection(pacman.direction, RIGHT)
         
-        if angleToPellet > math.pi/4 and angleToPellet < 3 * math.pi/4:
+        if angleToPellet >= math.pi/4 and angleToPellet <= 3 * math.pi/4:
             return RelativeDirection.fromActualDirection(pacman.direction, UP)
         
-        if angleToPellet < -math.pi/4 and angleToPellet > -3 * math.pi/4:
+        if angleToPellet <= -math.pi/4 and angleToPellet >= -3 * math.pi/4:
             return RelativeDirection.fromActualDirection(pacman.direction, DOWN)
         
-        if angleToPellet > 3 * math.pi/4 or angleToPellet < 3 * -math.pi/4:
+        if angleToPellet >= 3 * math.pi/4 or angleToPellet <= 3 * -math.pi/4:
             return RelativeDirection.fromActualDirection(pacman.direction, LEFT)
 
-        return RelativeDirection.UP           
+        return RelativeDirection.FORWARD
         
 
     def getClosestPellet(position: Vector2, pellets: Iterable[Pellet]):
