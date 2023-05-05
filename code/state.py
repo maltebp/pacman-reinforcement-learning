@@ -215,11 +215,45 @@ class State:
         # closest_ghost = self.getClosestGhostDirection(ghosts, pacman_target)
 
         directions_has_pellets = State.getDirectionsPelletState(game)
+        direction_to_closest_pellet = State.directionToClosestPellet(pacman, game.pellets.pelletList)
 
-        return str([ ghost_targeted_directions, directions_has_pellets ]) 
+        return str([ ghost_targeted_directions, directions_has_pellets, direction_to_closest_pellet]) 
     
 
-    
+    def directionToClosestPellet(pacman: Pacman, pellets: Iterable[Pellet]):
+        closestPellet = State.getClosestPellet(pacman.position, pellets)
+        if closestPellet == None:
+            # This should only happen when game is done
+            return RelativeDirection.UP
+        
+        relativePelletPosition = closestPellet.position - pacman.position
+        angleToPellet = math.atan2(-relativePelletPosition.y, relativePelletPosition.x)
+        
+        if angleToPellet < math.pi/4 and angleToPellet > -math.pi/4:
+            return RelativeDirection.fromActualDirection(pacman.direction, RIGHT)
+        
+        if angleToPellet > math.pi/4 and angleToPellet < 3 * math.pi/4:
+            return RelativeDirection.fromActualDirection(pacman.direction, UP)
+        
+        if angleToPellet < -math.pi/4 and angleToPellet > -3 * math.pi/4:
+            return RelativeDirection.fromActualDirection(pacman.direction, DOWN)
+        
+        if angleToPellet > 3 * math.pi/4 or angleToPellet < 3 * -math.pi/4:
+            return RelativeDirection.fromActualDirection(pacman.direction, LEFT)
+
+        return RelativeDirection.UP           
+        
+
+    def getClosestPellet(position: Vector2, pellets: Iterable[Pellet]):
+        closestPelletDistance = sys.float_info.max
+        closestPellet: Pellet = None
+        for pellet in pellets:    
+            manhattenDistance = abs(pellet.position.x - position.x) + abs(pellet.position.y - position.y)
+            if manhattenDistance < closestPelletDistance:
+                closestPellet = pellet
+                closestPelletDistance = manhattenDistance
+
+        return closestPellet
     
     def getDirectionsPelletState(game: GameController):
         pacman = game.pacman
