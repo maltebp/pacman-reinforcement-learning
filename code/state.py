@@ -293,12 +293,12 @@ class State:
 
                 isAtNewState = pacman.isAtNode or currentState != previousState
 
-                #print(pacman.direction)
+                print(pacman.direction)
                 if isAtNewState:
                     # We're at a new state
 
-                    #print(f"New state: {currentState}")
-                    #print(f"  isAtNode={pacman.isAtNode}")
+                    print(f"New state: {currentState}")
+                    print(f"  isAtNode={pacman.isAtNode}")
 
                     valid_directions = self.getValidRelativeDirections(pacman)
 
@@ -321,7 +321,7 @@ class State:
                         chosenDirection = self.p1.chooseAction(currentState, valid_directions)
                         game.pacman.learntDirection = chosenDirection.toActualDirection(pacman.direction)
                         isFirstState = False 
-                        #print(f"  action={chosenDirection}")
+                        print(f"  action={chosenDirection}")
 
                     previousState = currentState
 

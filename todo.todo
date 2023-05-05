@@ -1,41 +1,8 @@
 
-✔ Recap Q-learning
-✔ Understand Tic-Tac-Toe example
-✔ Watch pacman exercise
-    Got to 18:00
-✔ Get overview of hand-in 2
-    ✔ Figure out how much time I have for it (estimate)
-
-✔ Setup hand-in 2
-    ✔ Setup code
-    ✔ Change how you run code
-    ✔ Append date policy name
-    ✔ Load latest policy ()
-    ✔ Infinite training
-    ✔ Write out average iterations per escond
-    ✔ Fix update loop (it should not render)
-    ✔ Profile code
-
-✔ Initial idea brainstorm on hand-in 2
-☐ Test:
-    ✔ Same target
-    ✔ head on collision
-    ✔ Dying is bad (negative reward)
-    ☐ Actions to be relative to current direction
-        Otherwise it cannot create correlation
-    ☐ Differentiate between:
-        ☐ head-on-collision
-        ☐ chase
-        ☐ ghost target source node
-        ☐ ghost target target node
-    ☐ Direction in which there are least ghosts
-        Sum inverse distance to ghosts in each direction
-        Direction with lowest value is the best direction        
-    ☐ Pellet or no pellet
-    ☐ Power pellet (flag?)
-    
-
-Time
-    8H, Saturday
-    3H, Monday
-    3H, Monday
+☐ Quickly test if there are any mistakes in ghost direction eval
+☐ Pellet
+☐ Power pellet
+☐ Direction in which there are most pellets
+☐ Direction in which there are least ghosts
+    Sum inverse distance to ghosts in each direction
+    Direction with lowest value is the best direction        
