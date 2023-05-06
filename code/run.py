@@ -28,7 +28,7 @@ class GameController(object):
         self.clock = pygame.time.Clock()
         self.fruit = None
         self.pause = Pause(not self.skipRender)
-        self.level = 2
+        self.level = 0
         self.lives = 5
         self.score = 0
         self.textgroup = TextGroup()

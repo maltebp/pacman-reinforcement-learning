@@ -195,7 +195,15 @@ class State:
                     shortestDistance = closestPelletDistance
                     direction_to_closest_pellet = RelativeDirection.fromActualDirection(pacman.direction, nodeDirection)
 
-        return str([ State.getPacmanPreviousRelativeDirection(game.pacman, previousActualDirection), ghost_targeted_directions, directions_has_pellets, direction_to_closest_pellet]) 
+        has_power_pellet = any(ghost.mode.current == FREIGHT for ghost in game.ghosts.ghosts)
+
+        return str([ 
+            has_power_pellet,
+            State.getPacmanPreviousRelativeDirection(game.pacman, previousActualDirection), 
+            ghost_targeted_directions, 
+            directions_has_pellets, 
+            direction_to_closest_pellet
+        ]) 
     
 
     def getGhostTargetedDirections(game: GameController):
