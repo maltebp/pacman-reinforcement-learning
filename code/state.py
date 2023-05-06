@@ -171,9 +171,13 @@ class State:
         # Compute direction to closest pellet
         direction_to_closest_pellet: RelativeDirection = None
         if any(directions_has_pellets.values()):
+            # Closest pellet is on pacmans edge or the edge of the node that pacman is one,
+            # so just find closest to pacmans position
             direction_to_closest_pellet = State.directionToClosestPellet(pacman, game.pellets.pelletList)
         else:
-            
+
+            # No pellet in pacmans edge / adjacent edges, so find direction to
+            # neighboring node that is closest to a pellet            
             neighborNodes: Tuple[int, Node] = []
             if pacman.isAtNode:
                 for validDirection in pacman.getValidDirections():
@@ -186,6 +190,7 @@ class State:
             shortestDistance = sys.float_info.max
             for nodeDirection, node in neighborNodes:
                 closestPellet, closestPelletDistance = State.getClosestPellet(node.position, game.pellets.pelletList)
+                closestPelletDistance += pacman.position.manhattanDistanceTo(node.position)
                 if closestPelletDistance < shortestDistance:
                     shortestDistance = closestPelletDistance
                     direction_to_closest_pellet = RelativeDirection.fromActualDirection(pacman.direction, nodeDirection)

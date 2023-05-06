@@ -41,6 +41,9 @@ class Vector2(object):
     
     def distanceTo(self, other: Self):
         return (other - self).magnitude()
+    
+    def manhattanDistanceTo(self, other: Self):
+        return abs(self.x - other.x) + abs(self.y - other.y);
 
     def copy(self):
         return Vector2(self.x, self.y)
