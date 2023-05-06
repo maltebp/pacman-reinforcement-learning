@@ -3,7 +3,7 @@ import math
 import sys
 import time
 import pickle
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, Iterable, List, Self, Tuple
 from constants import *
 from ghosts import Ghost
 from nodes import Node
@@ -46,6 +46,13 @@ class RelativeDirection(Enum):
             if self == RelativeDirection.LEFT: return DOWN
         
         assert f"Invald pacman direction {pacmanCurrentActualDirection}"
+
+    def isOppositeDirection(self, otherDirection: Self):
+        if self == RelativeDirection.FORWARD and otherDirection == RelativeDirection.BACKWARD: return True
+        if self == RelativeDirection.BACKWARD and otherDirection == RelativeDirection.FORWARD: return True
+        if self == RelativeDirection.LEFT and otherDirection == RelativeDirection.RIGHT: return True
+        if self == RelativeDirection.RIGHT and otherDirection == RelativeDirection.LEFT: return True
+        return False        
 
     def __str__(self):
         return self.name
@@ -153,17 +160,20 @@ class State:
             return None
 
     # Updates the state with the current game world's information.
-    def generateStateString(self, game: GameController) -> str:
+    def generateStateString(self, game: GameController, previousActualDirection: int) -> str:
+
         pacman = game.pacman
 
         ghost_targeted_directions = State.getGhostTargetedDirections(game)
 
         directions_has_pellets = State.getDirectionsPelletState(game)
 
+        # Compute direction to closest pellet
         direction_to_closest_pellet: RelativeDirection = None
         if any(directions_has_pellets.values()):
             direction_to_closest_pellet = State.directionToClosestPellet(pacman, game.pellets.pelletList)
         else:
+            
             neighborNodes: Tuple[int, Node] = []
             if pacman.isAtNode:
                 for validDirection in pacman.getValidDirections():
@@ -180,7 +190,7 @@ class State:
                     shortestDistance = closestPelletDistance
                     direction_to_closest_pellet = RelativeDirection.fromActualDirection(pacman.direction, nodeDirection)
 
-        return str([ ghost_targeted_directions, directions_has_pellets, direction_to_closest_pellet]) 
+        return str([ State.getPacmanPreviousRelativeDirection(game.pacman, previousActualDirection), ghost_targeted_directions, directions_has_pellets, direction_to_closest_pellet]) 
     
 
     def getGhostTargetedDirections(game: GameController):
@@ -341,9 +351,15 @@ class State:
                     return True
             return False
         
-        assert False, "Nodes are not part of same edge"         
+        assert False, "Nodes are not part of same edge"    
 
-    
+
+    def getPacmanPreviousRelativeDirection(pacman: Pacman, previousActualDirection: int):        
+        if pacman.isAtNode:
+            return RelativeDirection.fromActualDirection(pacman.direction, previousActualDirection)
+        else:
+            return RelativeDirection.FORWARD
+
     # Checks if game is over i.e. level completed or all lives lost.
     def gameEnded(self, game):
         if game.lives <= 0 :
@@ -406,27 +422,17 @@ class State:
             previousState = None
             previousStateScore = 0
 
-            previousGhostNodes: Dict[Ghost, Node] = { }
-            for ghost in game.ghosts.ghosts:
-                previousGhostNodes[ghost] = ghost.node                
+            previousActualDirection = LEFT # Pacman always starts to move left
+            choseReverseOfPreviousActualDirection = False
 
             while True:
 
                 numFrames += 1
 
-                ghostChangedNode = False
-                for ghost in game.ghosts.ghosts:
-                    if previousGhostNodes[ghost] is not ghost.node:
-                        ghostChangedNode = True
-                    previousGhostNodes[ghost] = ghost.node     
-
-                currentState = self.generateStateString(game)
-
+                currentState = self.generateStateString(game, previousActualDirection)
                 isAtNewState = pacman.isAtNode or currentState != previousState
 
-                # print(pacman.direction)
                 if isAtNewState:
-                    # We're at a new state
 
                     # print(f"New state: {currentState}")
                     # print(f"  isAtNode={pacman.isAtNode}")
@@ -438,16 +444,10 @@ class State:
                     valid_directions = self.getValidRelativeDirections(pacman)
 
                     if self.isTraining and not isFirstState:
-                        # Update Q-value of previous state
-                        
-                        # ghostDistances = [
-                        #     ghost.position.distanceTo(game.pacman.position)
-                        #     for ghost in game.ghosts.ghosts
-                        # ]
-                        # ghostDistanceReward = sum(d**1.5 if d < 150 else 0 for d in ghostDistances )
                         stateScore = game.score
                         reward = (stateScore - previousStateScore) * 10
- 
+                        if choseReverseOfPreviousActualDirection: 
+                            reward -= 100
                         self.p1.updateQValueOfLastState(currentState, reward, valid_directions)
                         previousStateScore = stateScore 
 
@@ -455,6 +455,9 @@ class State:
                         # Take action
                         chosenDirection = self.p1.chooseAction(currentState, valid_directions)
                         game.pacman.learntDirection = chosenDirection.toActualDirection(pacman.direction)
+                        previousRelativeDirection = State.getPacmanPreviousRelativeDirection(pacman, previousActualDirection)
+                        choseReverseOfPreviousActualDirection = chosenDirection.isOppositeDirection(previousRelativeDirection)
+
                         # print(f"  action={chosenDirection}")
                         isFirstState = False 
                     else:
@@ -462,13 +465,15 @@ class State:
                     
                     previousState = currentState
 
+                previousActualDirection = pacman.direction
+
                 game.update()
 
                 if not pacman.alive:
 
                     if not isFirstState and self.isTraining:
                         # Update Q-value of previous state
-                        state = self.generateStateString(game)
+                        state = self.generateStateString(game, previousActualDirection)
                         reward = -1000
                         self.p1.updateQValueOfLastState(state, reward, [])
                     

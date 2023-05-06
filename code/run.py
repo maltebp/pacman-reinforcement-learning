@@ -28,7 +28,7 @@ class GameController(object):
         self.clock = pygame.time.Clock()
         self.fruit = None
         self.pause = Pause(not self.skipRender)
-        self.level = 0
+        self.level = 2
         self.lives = 5
         self.score = 0
         self.textgroup = TextGroup()
@@ -121,6 +121,8 @@ class GameController(object):
             if self.skipRender else
             self.clock.tick(FRAMERATE) / 1000.0 
         )
+
+        if dt > 1 / FRAMERATE: dt = 1 / FRAMERATE
         
         if self.pacman.alive:
             if not self.pause.paused:
