@@ -12,7 +12,7 @@ if __name__ == "__main__":
 
     # GAMMA -> Discount Rate
     # how much an action’s Q-value depends on the Q-value at the state (or states) it leads to.
-    DISCOUNT_RATE = 0.75
+    DISCOUNT_RATE = 0.80
 
     # RHO -> Randomness of Exploration
     # how often the algorithm will take a random action, rather than the best action it knows so far.

@@ -208,17 +208,36 @@ class State:
                         ghostDistanceToPacmanSource = ghost.position.distanceTo(pacman.node.position)
                         pacmanDistanceToPacmanSource = pacman.position.distanceTo(pacman.node.position)
                         if ghostDistanceToPacmanSource > pacmanDistanceToPacmanSource:
-                            # Ghost is in front of pacman
+                            # Ghost is in front of pacman   
                             ghost_targeted_directions[RelativeDirection.FORWARD] = True
 
         directions_has_pellets = State.getDirectionsPelletState(game)
-        direction_to_closest_pellet = State.directionToClosestPellet(pacman, game.pellets.pelletList)
+
+        direction_to_closest_pellet: RelativeDirection = None
+        if any(directions_has_pellets.values()):
+            direction_to_closest_pellet = State.directionToClosestPellet(pacman, game.pellets.pelletList)
+        else:
+            neighborNodes: Tuple[int, Node] = []
+            if pacman.isAtNode:
+                for validDirection in pacman.getValidDirections():
+                    directionNode = pacman.node.neighbors[validDirection]
+                    neighborNodes.append((validDirection, directionNode))   
+            else:
+                neighborNodes.append((pacman.direction, pacman.target))
+                neighborNodes.append((-pacman.direction, pacman.node))
+
+            shortestDistance = sys.float_info.max
+            for nodeDirection, node in neighborNodes:
+                closestPellet, closestPelletDistance = State.getClosestPellet(node.position, game.pellets.pelletList)
+                if closestPelletDistance < shortestDistance:
+                    shortestDistance = closestPelletDistance
+                    direction_to_closest_pellet = RelativeDirection.fromActualDirection(pacman.direction, nodeDirection)
 
         return str([ ghost_targeted_directions, directions_has_pellets, direction_to_closest_pellet]) 
     
 
     def directionToClosestPellet(pacman: Pacman, pellets: Iterable[Pellet]):
-        closestPellet = State.getClosestPellet(pacman.position, pellets)
+        closestPellet, closestPelletDistance = State.getClosestPellet(pacman.position, pellets)
         if closestPellet == None:
             # This should only happen when game is done
             return RelativeDirection.FORWARD
@@ -250,7 +269,7 @@ class State:
                 closestPellet = pellet
                 closestPelletDistance = manhattenDistance
 
-        return closestPellet
+        return closestPellet, closestPelletDistance
     
     def getDirectionsPelletState(game: GameController):
         pacman = game.pacman
@@ -275,29 +294,11 @@ class State:
                     State.edgeHasPellet(pacman.position, pacman.target.position, pellets)
             )
 
-            # if not directions_has_pellets[RelativeDirection.FORWARD]:
-            #     for direction in pacman.target.neighbors:
-            #         if direction == PORTAL: continue
-            #         targetNeighbor = pacman.target.neighbors[direction]
-            #         if targetNeighbor is None: continue
-            #         if State.edgeHasPellet(pacman.target.position, targetNeighbor.position, pellets):
-            #              directions_has_pellets[RelativeDirection.FORWARD] = True
-            #              break
-                    
             # Check if backward has pellets
             directions_has_pellets[RelativeDirection.BACKWARD] = (
                     State.edgeHasPellet(pacman.position, pacman.node.position, pellets)
             )
 
-            # if not directions_has_pellets[RelativeDirection.BACKWARD]:
-            #     for direction in pacman.node.neighbors:
-            #         if direction == PORTAL: continue
-            #         sourceNeighbor = pacman.node.neighbors[direction]
-            #         if sourceNeighbor is None: continue
-            #         if State.edgeHasPellet(pacman.node.position, sourceNeighbor.position, pellets):
-            #              directions_has_pellets[RelativeDirection.BACKWARD] = True
-            #              break
-                    
         return directions_has_pellets
     
     def edgeHasPellet(edgeStart: Vector2, edgeEnd: Vector2, pellets: Iterable[Pellet]):
@@ -441,7 +442,7 @@ class State:
                         # ]
                         # ghostDistanceReward = sum(d**1.5 if d < 150 else 0 for d in ghostDistances )
                         stateScore = game.score
-                        reward = stateScore - previousStateScore
+                        reward = (stateScore - previousStateScore) * 10
  
                         self.p1.updateQValueOfLastState(currentState, reward, valid_directions)
                         previousStateScore = stateScore 
