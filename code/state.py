@@ -155,61 +155,8 @@ class State:
     # Updates the state with the current game world's information.
     def generateStateString(self, game: GameController) -> str:
         pacman = game.pacman
-        pacman_target = game.nodes.getPixelsFromNode(game.pacman.target)
-        pacman_source = game.nodes.getPixelsFromNode(game.pacman.node)
-        ghosts = game.ghosts.ghosts 
 
-        def isGhostTargetingNode(node: Node) -> bool:
-            nonlocal game
-            return any(ghost.target is node for ghost in game.ghosts.ghosts)
-        
-        def isGhostTargetingNodeFromNode(source: Node, target: Node):
-            return any(ghost.node is source and ghost.target is target for ghost in game.ghosts.ghosts)
-        
-        def isGhostTargetingNodeNotFromNode(invalidSource: Node, target) -> bool:
-            nonlocal game
-            return any(ghost.node is not invalidSource and ghost.target is target for ghost in game.ghosts.ghosts)
-        
-        ghost_targeted_directions = {
-            RelativeDirection.FORWARD: False,
-            RelativeDirection.BACKWARD: False,
-            RelativeDirection.RIGHT: False,
-            RelativeDirection.LEFT: False,
-        }
-        
-        if pacman.isAtNode:
-            for validDirection in pacman.getValidDirections():
-                directionNode = pacman.node.neighbors[validDirection]
-                relativeDirection = RelativeDirection.fromActualDirection(pacman.direction, validDirection)
-                ghost_targeted_directions[relativeDirection] = (
-                    isGhostTargetingNodeNotFromNode(pacman.node, directionNode) 
-                    or 
-                    isGhostTargetingNodeFromNode(directionNode, pacman.node)
-                )
-        else:
-            for ghost in game.ghosts.ghosts:
-                
-                if ghost.target is pacman.target:
-                    if ghost.node is not pacman.node:
-                        ghost_targeted_directions[RelativeDirection.FORWARD] = True
-                    else:
-                        # Ghost is on same edge as pacman, moving in same direction
-                        ghostDistanceToPacmanTarget = ghost.position.distanceTo(pacman.target.position)
-                        pacmanDistanceToPacmanTarget = pacman.position.distanceTo(pacman.target.position)
-                        if ghostDistanceToPacmanTarget > pacmanDistanceToPacmanTarget:
-                            # Ghost is behind of pacman
-                            ghost_targeted_directions[RelativeDirection.BACKWARD] = True
-
-                if ghost.target is pacman.node:
-                    if ghost.node is not pacman.target:
-                        ghost_targeted_directions[RelativeDirection.BACKWARD] = True
-                    else:
-                        # Ghost is on same edge as pacman, moving in opposite direction
-                        ghostDistanceToPacmanSource = ghost.position.distanceTo(pacman.node.position)
-                        pacmanDistanceToPacmanSource = pacman.position.distanceTo(pacman.node.position)
-                        if ghostDistanceToPacmanSource > pacmanDistanceToPacmanSource:
-                            # Ghost is in front of pacman   
-                            ghost_targeted_directions[RelativeDirection.FORWARD] = True
+        ghost_targeted_directions = State.getGhostTargetedDirections(game)
 
         directions_has_pellets = State.getDirectionsPelletState(game)
 
@@ -235,6 +182,61 @@ class State:
 
         return str([ ghost_targeted_directions, directions_has_pellets, direction_to_closest_pellet]) 
     
+
+    def getGhostTargetedDirections(game: GameController):
+        pacman = game.pacman
+        ghosts = game.ghosts.ghosts
+
+        def isGhostTargetingNodeFromNode(source: Node, target: Node):
+            return any(ghost.node is source and ghost.target is target for ghost in ghosts)
+        
+        def isGhostTargetingNodeNotFromNode(invalidSource: Node, target) -> bool:
+            nonlocal game
+            return any(ghost.node is not invalidSource and ghost.target is target for ghost in ghosts)
+        
+        ghost_targeted_directions = {
+            RelativeDirection.FORWARD: False,
+            RelativeDirection.BACKWARD: False,
+            RelativeDirection.RIGHT: False,
+            RelativeDirection.LEFT: False,
+        }
+        
+        if pacman.isAtNode:
+            for validDirection in pacman.getValidDirections():
+                directionNode = pacman.node.neighbors[validDirection]
+                relativeDirection = RelativeDirection.fromActualDirection(pacman.direction, validDirection)
+                ghost_targeted_directions[relativeDirection] = (
+                    isGhostTargetingNodeNotFromNode(pacman.node, directionNode) 
+                    or 
+                    isGhostTargetingNodeFromNode(directionNode, pacman.node)
+                )
+        else:
+            for ghost in ghosts:
+                
+                if ghost.target is pacman.target:
+                    if ghost.node is not pacman.node:
+                        ghost_targeted_directions[RelativeDirection.FORWARD] = True
+                    else:
+                        # Ghost is on same edge as pacman, moving in same direction
+                        ghostDistanceToPacmanTarget = ghost.position.distanceTo(pacman.target.position)
+                        pacmanDistanceToPacmanTarget = pacman.position.distanceTo(pacman.target.position)
+                        if ghostDistanceToPacmanTarget > pacmanDistanceToPacmanTarget:
+                            # Ghost is behind of pacman
+                            ghost_targeted_directions[RelativeDirection.BACKWARD] = True
+
+                if ghost.target is pacman.node:
+                    if ghost.node is not pacman.target:
+                        ghost_targeted_directions[RelativeDirection.BACKWARD] = True
+                    else:
+                        # Ghost is on same edge as pacman, moving in opposite direction
+                        ghostDistanceToPacmanSource = ghost.position.distanceTo(pacman.node.position)
+                        pacmanDistanceToPacmanSource = pacman.position.distanceTo(pacman.node.position)
+                        if ghostDistanceToPacmanSource > pacmanDistanceToPacmanSource:
+                            # Ghost is in front of pacman   
+                            ghost_targeted_directions[RelativeDirection.FORWARD] = True
+
+        return ghost_targeted_directions
+
 
     def directionToClosestPellet(pacman: Pacman, pellets: Iterable[Pellet]):
         closestPellet, closestPelletDistance = State.getClosestPellet(pacman.position, pellets)
@@ -271,6 +273,7 @@ class State:
 
         return closestPellet, closestPelletDistance
     
+    
     def getDirectionsPelletState(game: GameController):
         pacman = game.pacman
         pellets = game.pellets.pelletList
@@ -300,6 +303,7 @@ class State:
             )
 
         return directions_has_pellets
+    
     
     def edgeHasPellet(edgeStart: Vector2, edgeEnd: Vector2, pellets: Iterable[Pellet]):
         def almost_equal(f1: float, f2: float):
