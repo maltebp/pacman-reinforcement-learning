@@ -98,8 +98,8 @@ class State:
                     valid_directions = self.getValidRelativeDirections(pacman)
 
                     if self.isTraining and not isFirstState:
-                        stateScore = game.pellets.numEaten * 100
-                        reward = stateScore - previousStateScore
+                        stateScore = game.score
+                        reward = (stateScore - previousStateScore) * 10
                         if choseReverseOfPreviousActualDirection: 
                             reward -= 100
                         self.p1.updateQValueOfLastState(currentState, reward, valid_directions)
