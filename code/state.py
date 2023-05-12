@@ -125,7 +125,7 @@ class State:
 
                     if not isFirstState and self.isTraining:
                         # Update Q-value of previous state
-                        state = self.generateStateString(game, previousActualDirection)
+                        state = generateStateString(game, previousActualDirection)
                         reward = -1000
                         self.p1.updateQValueOfLastState(state, reward, [])
                     
